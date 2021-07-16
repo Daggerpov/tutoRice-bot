@@ -1,0 +1,36 @@
+{
+  "name": "freerice-bot",
+  "version": "1.0.0",
+  "description": "This free bot is going to allow discord users to access the functionality of the non-profit organization freerice.com within the application. They can do this by inviting this bot to their own discord servers and then typing in the proper commands which they can access by typing \"~help\" within a text channel of their choice.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "type": "tsc src/index.ts --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Daggerpov/freerice-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Daggerpov/freerice-bot/issues"
+  },
+  "homepage": "https://github.com/Daggerpov/freerice-bot#readme",
+  "dependencies": {
+    "discord.js": "^12.5.3",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.12",
+    "puppeteer": "^10.1.0",
+    "sequelize": "^6.6.5",
+    "sqlite3": "^5.0.2",
+    "typescript": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^16.3.2"
+  }
+}
