@@ -15,7 +15,3 @@ npm install typescript
 npm install sequelize
 npm install sqlite3
 
-
-#scraping
-npm install puppeteer
-pip install selenium && pip install bs4 && pip install requests 

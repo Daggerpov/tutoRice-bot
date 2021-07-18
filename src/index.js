@@ -79,7 +79,7 @@ function createUser(tag) {
 //Need this function because I need to be able to use await keyword
 function displayRankings(message) {
     return __awaiter(this, void 0, void 0, function () {
-        var database, users, riceAmounts, header, table, underline, i, extra;
+        var database, users, riceAmounts, arr, maxFields, i, extra, embed;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, RiceRank.findAll({
@@ -90,29 +90,20 @@ function displayRankings(message) {
                     database = _a.sent();
                     users = database.map(function (t) { return t.username; });
                     riceAmounts = database.map(function (t) { return t.rice; });
-                    header = "Rank **|**  Username: Rice Earned";
-                    table = "\n" + header + "\n";
-                    underline = "**" + '-'.repeat(header.length + 3) + "**\n";
-                    table += underline;
-                    for (i = 0; i < database.length; i++) {
+                    arr = [];
+                    maxFields = (database.length < 11) ? database.length : 11;
+                    for (i = 0; i < maxFields; i++) {
                         extra = 2.5;
                         if (i == 0) {
                             extra += 1;
                         }
-                        table += ((i + 1).toString()).padEnd('Rank'.length + extra, ' ') + "  **|**  " + users[i] + ": " + riceAmounts[i] + "\n";
-                        //"  " + (i+1) + "   |  " + users[i] + ": " + riceAmounts[i] + '\n';
+                        arr[i] = { name: ((i + 1).toString()).padEnd('Rank'.length + extra, ' ') + "    **|**  " + users[i] + ": " + riceAmounts[i] + "\n",
+                            value: '\u200B',
+                            inline: false };
                     }
-                    ;
-                    // Possible avenue for formatting
-                    // const exampleEmbed = new Discord.MessageEmbed()
-                    //     .setColor('#0099ff')
-                    //     .setTitle('Rice Rank Leaderboard')
-                    //     .setURL('https://discord.js.org/')
-                    //     .addFields(
-                    //         { name: 'Inline field title', value: 'Some value here', inline: true },
-                    //         { name: 'Inline field title', value: 'Some value here', inline: true },
-                    //     )
-                    message.channel.send(table);
+                    embed = new Discord.MessageEmbed().setColor(0x4286f4).setTitle('__Rank |  Username: Rice Donated__').addFields(arr);
+                    // message.channel.send(table);
+                    message.channel.send(embed);
                     return [2 /*return*/];
             }
         });

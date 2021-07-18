@@ -38,32 +38,39 @@ async function displayRankings(message){ //Not formatted properly yet
     let users = database.map(t => t.username);
     let riceAmounts = database.map(t => t.rice);
 
-    let header:string = "Rank **|**  Username: Rice Earned";
-    let table:string = `\n${header}\n`;
-    let underline: string = `**${'-'.repeat(header.length + 3)}**\n`;
-    table += underline;
+    // let header:string = "Rank **|**  Username: Rice Donated";
+    // let table:string = `\n${header}\n`;
+    // let underline: string = `**${'-'.repeat(header.length + 3)}**\n`;
+    // table += underline;
 
-    for(let i = 0; i<database.length;i++){
-        //discord username character limit is 32 (in case this is needed in future)
+    // for(let i = 0; i<database.length;i++){
+    //     //discord username character limit is 32 (in case this is needed in future)
+    //     let extra:number = 2.5;
+    //     if (i == 0){
+    //         extra += 1;
+    //     }
+    //     table += `${((i+1).toString()).padEnd('Rank'.length + extra, ' ')}  **|**  ${users[i]}: ${riceAmounts[i]}\n`
+    //     //"  " + (i+1) + "   |  " + users[i] + ": " + riceAmounts[i] + '\n';
+    // };
+
+    let arr:Array<Discord.EmbedFieldData> = [];
+    let maxFields = (database.length<11) ? database.length:11;
+    for(let i = 0; i<maxFields; i++){
         let extra:number = 2.5;
         if (i == 0){
             extra += 1;
         }
-        table += `${((i+1).toString()).padEnd('Rank'.length + extra, ' ')}  **|**  ${users[i]}: ${riceAmounts[i]}\n`
-        //"  " + (i+1) + "   |  " + users[i] + ": " + riceAmounts[i] + '\n';
-    };
+        arr[i] = {name: `${((i+1).toString()).padEnd('Rank'.length + extra, ' ')}    **|**  ${users[i]}: ${riceAmounts[i]}\n`,
+                  value: '\u200B',
+                  inline: false};
+    }
+    const embed = new Discord.MessageEmbed().setColor(0x4286f4).setTitle('__Rank |  Username: Rice Donated__').addFields(
+        arr
+    );    
 
-    // Possible avenue for formatting
-    // const exampleEmbed = new Discord.MessageEmbed()
-    //     .setColor('#0099ff')
-    //     .setTitle('Rice Rank Leaderboard')
-    //     .setURL('https://discord.js.org/')
-    //     .addFields(
-    //         { name: 'Inline field title', value: 'Some value here', inline: true },
-    //         { name: 'Inline field title', value: 'Some value here', inline: true },
-    //     )
+    // message.channel.send(table);
     
-    message.channel.send(table);
+    message.channel.send(embed);
 };
 
 client.on('message', msg => {
