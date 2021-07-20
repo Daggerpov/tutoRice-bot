@@ -13,13 +13,13 @@ client.on('ready', () => {
 });
 
 
-async function createUser(tag:String){ //Creates an entry in the RiceRank database
+async function createUser(msg){ //Creates an entry in both the Players database and the Servers database
     try{
-        const user = await RiceRank.create({
-            username: tag,
+        const player = await Player.create({ //Creates a player that holds its username and rice count as fields
+            username: msg.author.tag, 
             rice: 0, 
         })
-        console.log(`Created user ${user.username}`)
+        console.log(`Created user ${player.username}`)
     }catch(e){
         if (e.name === 'SequelizeUniqueConstraintError') {
             console.log('That tag already exists.');
@@ -27,40 +27,42 @@ async function createUser(tag:String){ //Creates an entry in the RiceRank databa
             console.log('Something went wrong with adding a tag.');
         }
     }
+    const user = await Servers.create({ //Creates a user that holds its username and the server it was created in as fields
+        username: msg.author.tag,
+        serverName: msg.guild.id,
+    })
 }
 
 //Need this function because I need to be able to use await keyword
 async function displayRankings(message){ //Not formatted properly yet
-    const database = await RiceRank.findAll({
-        order: [['rice','ASC']],
-        attributes: ['username','rice']
+    const players = await Servers.findAll({ //Finds all players that are a part of the server that this function was called in
+        where: {
+            serverName: message.guild.id
+        },
+        attributes: ['username']
     });
-    let users = database.map(t => t.username);
-    let riceAmounts = database.map(t => t.rice);
-
-    // let header:string = "Rank **|**  Username: Rice Donated";
-    // let table:string = `\n${header}\n`;
-    // let underline: string = `**${'-'.repeat(header.length + 3)}**\n`;
-    // table += underline;
-
-    // for(let i = 0; i<database.length;i++){
-    //     //discord username character limit is 32 (in case this is needed in future)
-    //     let extra:number = 2.5;
-    //     if (i == 0){
-    //         extra += 1;
-    //     }
-    //     table += `${((i+1).toString()).padEnd('Rank'.length + extra, ' ')}  **|**  ${users[i]}: ${riceAmounts[i]}\n`
-    //     //"  " + (i+1) + "   |  " + users[i] + ": " + riceAmounts[i] + '\n';
-    // };
+    
+    const playerList = players.map(t => t.username); //Creates an array of player usernames
+    let riceAmounts = []
+    for(let i = 0; i<playerList.length; i++){ //Finds the rice count of those players in the list
+        const user = await Player.findOne({
+            where: {
+                username : playerList[i]
+            },
+            order: [['rice','ASC']],
+            attributes: ['username','rice']
+        });
+        riceAmounts[i] = user.rice;
+    }
 
     let arr:Array<Discord.EmbedFieldData> = [];
-    let maxFields = (database.length<11) ? database.length:11;
+    let maxFields = (playerList.length<11) ? playerList.length:11;
     for(let i = 0; i<maxFields; i++){
         let extra:number = 2.5;
         if (i == 0){
             extra += 1;
         }
-        arr[i] = {name: `${((i+1).toString()).padEnd('Rank'.length + extra, ' ')}    **|**  ${users[i]}: ${riceAmounts[i]}\n`,
+        arr[i] = {name: `${((i+1).toString()).padEnd('Rank'.length + extra, ' ')}    **|**  ${playerList[i]}: ${riceAmounts[i]}\n`,
                   value: '\u200B',
                   inline: false};
     }
@@ -83,7 +85,7 @@ client.on('message', msg => {
     }
     else if (msg.content === '~play') {
 
-    createUser(msg.author.tag); //Creates a user in the database, does nothing if player is already in database
+    createUser(msg); //Creates a user in the database, does nothing if player is already in database
     const categoryInfo = (categoryName, emoji) => categoryName+emoji.padStart(100-categoryName.length, " ") // change "" to " " if want to fix this
     msg.channel.send
     (
@@ -161,7 +163,7 @@ const sequelize = new Sequelize('database', 'user', 'password', {
 	storage: 'database.sqlite',
 });
 
-const RiceRank = sequelize.define('Rice Rank' ,{
+const Player = sequelize.define('Player' ,{
     username: { //Tag of the user is the unique key
         type: Sequelize.STRING,
         unique: true,
@@ -172,6 +174,23 @@ const RiceRank = sequelize.define('Rice Rank' ,{
     },
 });
 
-RiceRank.sync(); //Creates the database
+const Servers = sequelize.define('Servers', {
+    username: { //Tag of the user is a foreign key from the player database
+        type: Sequelize.STRING,
+        references: {
+            model: 'players',
+            key: 'username',
+        },
+    },
+    serverName: { //The server that the user was created in
+        type: Sequelize.STRING,
+    },
+});
+
+Player.hasMany(Servers); //Creates a one-to-many table relationship between Player and Servers
+
+//Creates the databases
+Player.sync(); 
+Servers.sync();
 
 client.login(process.env.BOT_TOKEN);
