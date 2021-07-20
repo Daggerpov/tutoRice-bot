@@ -47,31 +47,49 @@ var playID, playChannel, scrapeOutput;
 client.on('ready', function () {
     console.log("Logged in as " + client.user.tag + "!");
 });
-function createUser(tag) {
+function createUser(msg) {
     return __awaiter(this, void 0, void 0, function () {
-        var user, e_1;
+        var player, e_1, user, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, RiceRank.create({
-                            username: tag,
+                    return [4 /*yield*/, Player.create({
+                            username: msg.author.tag,
                             rice: 0
                         })];
                 case 1:
-                    user = _a.sent();
-                    console.log("Created user " + user.username);
+                    player = _a.sent();
+                    console.log("Created user " + player.username);
                     return [3 /*break*/, 3];
                 case 2:
                     e_1 = _a.sent();
                     if (e_1.name === 'SequelizeUniqueConstraintError') {
-                        console.log('That tag already exists.');
+                        console.log('That tag already exists (Players).');
                     }
                     else {
-                        console.log('Something went wrong with adding a tag.');
+                        console.log('Something went wrong with adding a tag (Players).');
                     }
                     return [3 /*break*/, 3];
-                case 3: return [2 /*return*/];
+                case 3:
+                    _a.trys.push([3, 5, , 6]);
+                    return [4 /*yield*/, Servers.create({
+                            username: msg.author.tag,
+                            serverName: msg.guild.id
+                        })];
+                case 4:
+                    user = _a.sent();
+                    return [3 /*break*/, 6];
+                case 5:
+                    e_2 = _a.sent();
+                    if (e_2.name === 'SequelizeUniqueConstraintError') {
+                        console.log('That tag already exists (Servers).');
+                    }
+                    else {
+                        console.log('Something went wrong with adding a tag (Servers).');
+                    }
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
             }
         });
     });
@@ -79,25 +97,46 @@ function createUser(tag) {
 //Need this function because I need to be able to use await keyword
 function displayRankings(message) {
     return __awaiter(this, void 0, void 0, function () {
-        var database, users, riceAmounts, arr, maxFields, i, extra, embed;
+        var players, playerList, riceAmounts, i, user, arr, maxFields, i, extra, embed;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, RiceRank.findAll({
-                        order: [['rice', 'ASC']],
-                        attributes: ['username', 'rice']
+                case 0: return [4 /*yield*/, Servers.findAll({
+                        where: {
+                            serverName: message.guild.id
+                        },
+                        attributes: ['username']
                     })];
                 case 1:
-                    database = _a.sent();
-                    users = database.map(function (t) { return t.username; });
-                    riceAmounts = database.map(function (t) { return t.rice; });
+                    players = _a.sent();
+                    playerList = players.map(function (t) { return t.username; });
+                    riceAmounts = [];
+                    i = 0;
+                    _a.label = 2;
+                case 2:
+                    if (!(i < playerList.length)) return [3 /*break*/, 5];
+                    return [4 /*yield*/, Player.findOne({
+                            where: {
+                                username: playerList[i]
+                            },
+                            order: [['rice', 'ASC']],
+                            attributes: ['username', 'rice']
+                        })];
+                case 3:
+                    user = _a.sent();
+                    riceAmounts[i] = user.rice;
+                    _a.label = 4;
+                case 4:
+                    i++;
+                    return [3 /*break*/, 2];
+                case 5:
                     arr = [];
-                    maxFields = (database.length < 11) ? database.length : 11;
+                    maxFields = (playerList.length < 11) ? playerList.length : 11;
                     for (i = 0; i < maxFields; i++) {
                         extra = 2.5;
                         if (i == 0) {
                             extra += 1;
                         }
-                        arr[i] = { name: ((i + 1).toString()).padEnd('Rank'.length + extra, ' ') + "    **|**  " + users[i] + ": " + riceAmounts[i] + "\n",
+                        arr[i] = { name: ((i + 1).toString()).padEnd('Rank'.length + extra, ' ') + "    **|**  " + playerList[i] + ": " + riceAmounts[i] + "\n",
                             value: '\u200B',
                             inline: false };
                     }
@@ -119,7 +158,7 @@ client.on('message', function (msg) {
         displayRankings(msg);
     }
     else if (msg.content === '~play') {
-        createUser(msg.author.tag); //Creates a user in the database, does nothing if player is already in database
+        createUser(msg); //Creates a user in the database, does nothing if player is already in database
         /*     'Here is a list of categories you can choose (by reacting) to play through the freerice bot: \n\n' +
             "Mathematics:",":triangular_ruler:"+  "\n\n" +
             "Sciences:",":atom:" +  "\n\n" +
@@ -196,7 +235,7 @@ var sequelize = new Sequelize('database', 'user', 'password', {
     // SQLite only
     storage: 'database.sqlite'
 });
-var RiceRank = sequelize.define('Rice Rank', {
+var Player = sequelize.define('Player', {
     username: {
         type: Sequelize.STRING,
         unique: true
@@ -206,5 +245,22 @@ var RiceRank = sequelize.define('Rice Rank', {
         defaultValue: 0
     }
 });
-RiceRank.sync(); //Creates the database
+var Servers = sequelize.define('Servers', {
+    username: {
+        type: Sequelize.STRING,
+        references: {
+            model: 'players',
+            key: 'username'
+        },
+        unique: 'compositeIndex'
+    },
+    serverName: {
+        type: Sequelize.STRING,
+        unique: 'compositeIndex'
+    }
+});
+Player.hasMany(Servers); //Creates a one-to-many table relationship between Player and Servers
+//Creates the databases
+Player.sync();
+Servers.sync();
 client.login(process.env.BOT_TOKEN);
