@@ -38,11 +38,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 require('dotenv').config();
 var Discord = require("discord.js");
-//const Discord = require('discord.js'); //Curly braces allow you to import specific things from discord class, we only need Client);
 var client = new Discord.Client();
 var Sequelize = require('sequelize');
 var spawn = require('child_process').spawn;
 var playID, playChannel, scrapeOutput;
+// for multi embed pages
+var recon = require('reconlx');
+var ReactionPages = recon.ReactionPages;
 //client.prefix = "~";
 client.on('ready', function () {
     console.log("Logged in as " + client.user.tag + "!");
@@ -149,6 +151,10 @@ function displayRankings(message) {
     });
 }
 ;
+function selectCategory(subject) {
+    var category = 'asdf';
+    return category;
+}
 client.on('message', function (msg) {
     if (msg.content === '~freerice') {
         //var txt = "here";
@@ -214,7 +220,8 @@ client.on('messageReactionAdd', function (reaction, user) {
     if (reaction.message.id === playID && user.tag !== 'freerice#4898') {
         switch (name) {
             case '📐':
-                question_category('📐');
+                var category = selectCategory('📐');
+                question_category(category);
                 break;
             case '⚛️':
                 question_category('⚛️');

@@ -15,3 +15,6 @@ npm install typescript
 npm install sequelize
 npm install sqlite3
 
+#for multi line embed
+npm install reconlx 
+

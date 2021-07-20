@@ -1,7 +1,7 @@
 import sys 
 
-emoji = sys.argv[1]
+category = sys.argv[1]
 def questions():
-    print(emoji)
+    print(f'this is the: {category}')
 
 questions()
