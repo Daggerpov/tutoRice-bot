@@ -1,10 +1,14 @@
 require('dotenv').config();
 import * as Discord from 'discord.js';
-//const Discord = require('discord.js'); //Curly braces allow you to import specific things from discord class, we only need Client);
+import { PassThrough } from 'node:stream';
 const client = new Discord.Client();
 const Sequelize = require('sequelize');
 const { spawn } = require('child_process');
 let playID, playChannel, scrapeOutput;
+
+// for multi embed pages
+const recon = require('reconlx');
+const ReactionPages = recon.ReactionPages;
 
 //client.prefix = "~";
 
@@ -83,6 +87,11 @@ async function displayRankings(message){ //Not formatted properly yet
     
     message.channel.send(embed);
 };
+
+function selectCategory(subject:string){
+    let category:string = 'asdf';
+    return category;
+}
 
 client.on('message', msg => {
     if (msg.content === '~freerice') {
@@ -163,7 +172,8 @@ client.on('messageReactionAdd', (reaction, user) =>{
     if(reaction.message.id === playID && user.tag!== 'freerice#4898'){
         switch (name){
             case '📐':
-                question_category('📐');
+                let category = selectCategory('📐');
+                question_category(category);
                 break;
             case '⚛️':
                 question_category('⚛️');
