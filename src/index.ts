@@ -90,16 +90,17 @@ client.on('message', msg => {
         "Geography:",":earth_americas:"+  "\n\n" +
         "English:",":abc:" */
         
-        let firstTitleLine:string = "Here's our list of subjects you can choose from (by reacting) to find a";
-        let secondTitleLine:string = "more specific category to play:";
-        let amountOfSpaces:number = (firstTitleLine.length - secondTitleLine.length - 2);
+        let firstTitleLine:string = "__Here's our list of subjects you can choose from (by reacting)__";
+        let secondTitleLine:string = "__to find a more specific category to play__";
+        let amountOfSpaces:number = (firstTitleLine.replace('_', '').length - secondTitleLine.replace('_', '').length);
         
         const playEmbed = new Discord.MessageEmbed()
         .setColor('0x4286f4')
         .setTitle(`${firstTitleLine}\n${" ".repeat(amountOfSpaces) + secondTitleLine + " ".repeat(amountOfSpaces)}`)
         .addFields(    
-            { name: "__Subject__", value: "\nMathematics\n\nSciences\n\nGeography\n\nEnglish", inline: true},
-            { name: "__Emoji__", value: "\n:triangular_ruler:\n\n:atom:\n\n:earth_americas:\n\n:abc:", inline: true}
+            // \u200B is to add a blank field. inline being true means these two fields are on the same line
+            { name: '\u200B'/* "__Subject__" */, value: "Mathematics:\n\nSciences:\n\nGeography:\n\nEnglish:", inline: true},
+            { name: '\u200B'/* "__Emoji__" */, value: ":triangular_ruler:\n\n:atom:\n\n:earth_americas:\n\n:abc:", inline: true}
         )
 
         msg.channel.send(playEmbed).then(sent =>{
@@ -118,13 +119,16 @@ client.on('message', msg => {
     }
     
     else if (msg.content === '~help') {
-        const command = (commandName:string) => commandName.padEnd(15, " ")
-        let helpTitle:string = 'Below is a list of available commands';
-        msg.channel.send(`${helpTitle} \n` +
-        `**${'-'.repeat(helpTitle.length + 6)}**\n` +
-        `1. ~${command('freerice')}|description of the bot and its purpose \n` +
-        `2. ~${command('play')}|play with the freerice bot by answering questions to earn rice \n` +
-        `3. ~${command('rankings')}|see the current server-wide rankings for users' rice earned`); // decide if (server or Discord)-wide
+        const helpEmbed = new Discord.MessageEmbed()
+        .setColor('0x4286f4')
+        .setTitle(`__Below is a list of available commands__`)
+        .addFields(    
+            // \u200B is to add a blank field. inline being true means these two fields are on the same line
+            { name: '\u200B'/* "__Subject__" */, value: "~freerice\n\n~play\n\n~rankings", inline: true},
+            { name: '\u200B'/* "__Emoji__" */, value: "|  description of the bot and its purpose\n\n" +
+            "|  play with the freerice bot by answering questions to earn rice\n\n|  see the current server-wide rankings for users' rice earned", inline: true}
+        )
+        msg.channel.send(helpEmbed)
     }
 });
 
