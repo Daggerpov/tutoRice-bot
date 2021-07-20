@@ -97,8 +97,7 @@ function displayRankings(message) {
                         if (i == 0) {
                             extra += 1;
                         }
-                        arr[i] = { name: ((i + 1).toString()).padEnd('Rank'.length + extra, ' ') + "    **|**  " + users[i] + ": " + riceAmounts[i] + "\n",
-                            value: '\u200B',
+                        arr[i] = { name: ((i + 1).toString()).padEnd('Rank'.length + extra, ' ') + "    **|**  " + users[i] + ": " + riceAmounts[i] + "\n", value: '\u200B',
                             inline: false };
                     }
                     embed = new Discord.MessageEmbed().setColor(0x4286f4).setTitle('__Rank |  Username: Rice Donated__').addFields(arr);
@@ -120,12 +119,20 @@ client.on('message', function (msg) {
     }
     else if (msg.content === '~play') {
         createUser(msg.author.tag); //Creates a user in the database, does nothing if player is already in database
-        var categoryInfo = function (categoryName, emoji) { return categoryName + emoji.padStart(100 - categoryName.length, " "); }; // change "" to " " if want to fix this
-        msg.channel.send('Here is a list of categories you can choose (by reacting) to play through the freerice bot: \n\n' +
-            categoryInfo("Mathematics:", ":triangular_ruler:") + "\n\n" +
-            categoryInfo("Sciences:", ":atom:") + "\n\n" +
-            categoryInfo("Geography:", ":earth_americas:") + "\n\n" +
-            categoryInfo("English:", ":abc:")).then(function (sent) {
+        /*     'Here is a list of categories you can choose (by reacting) to play through the freerice bot: \n\n' +
+            "Mathematics:",":triangular_ruler:"+  "\n\n" +
+            "Sciences:",":atom:" +  "\n\n" +
+            "Geography:",":earth_americas:"+  "\n\n" +
+            "English:",":abc:" */
+        msg.channel.send({ embed: {
+                color: 3447003,
+                title: "Here's our list of subjects you can choose (by reacting) to find a more specific category to play:",
+                fields: [
+                    { value: "Mathematics\nSciences\nGeography\nEnglish", inline: true },
+                    { value: ":triangular_rule:\:atom:\n:earth_americas\n:abc:", inline: true }
+                ]
+            }
+        }).then(function (sent) {
             playID = sent.id;
             playChannel = sent.channel;
             // these reactions are obtained by searching up the ones above with a \ (forward slash)

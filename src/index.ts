@@ -83,28 +83,34 @@ client.on('message', msg => {
     }
     else if (msg.content === '~play') {
 
-    createUser(msg.author.tag); //Creates a user in the database, does nothing if player is already in database
-    const categoryInfo = (categoryName, emoji) => categoryName+emoji.padStart(100-categoryName.length, " ") // change "" to " " if want to fix this
-    msg.channel.send
-    (
-    'Here is a list of categories you can choose (by reacting) to play through the freerice bot: \n\n' +
-    categoryInfo("Mathematics:",":triangular_ruler:")+  "\n\n" +
-    categoryInfo("Sciences:",":atom:") +  "\n\n" +
-    categoryInfo("Geography:",":earth_americas:")+  "\n\n" +
-    categoryInfo("English:",":abc:")
-    ).then(sent =>{
-        playID = sent.id;
-        playChannel = sent.channel;
-    
-        // these reactions are obtained by searching up the ones above with a \ (forward slash)
-        // in front of them i.e. \:calendar_spiral:, need to use these since they're universal 
-        // and you can't react with the :(emoji): formatted emojis. 
-    
-        sent.react('📐');
-        sent.react('⚛️');
-        sent.react('🌎');
-        sent.react('🔤');
-    });
+        createUser(msg.author.tag); //Creates a user in the database, does nothing if player is already in database
+    /*     'Here is a list of categories you can choose (by reacting) to play through the freerice bot: \n\n' +
+        "Mathematics:",":triangular_ruler:"+  "\n\n" +
+        "Sciences:",":atom:" +  "\n\n" +
+        "Geography:",":earth_americas:"+  "\n\n" +
+        "English:",":abc:" */
+        
+        msg.channel.send({embed: {
+            color: 3447003,
+            title: "Here's our list of subjects you can choose (by reacting) to find a more specific category to play:",
+            fields: [
+            { value: "Mathematics\nSciences\nGeography\nEnglish", inline: true},
+            { value: ":triangular_rule:\:atom:\n:earth_americas\n:abc:", inline: true}
+            ]
+        }
+        }).then(sent =>{
+            playID = sent.id;
+            playChannel = sent.channel;
+        
+            // these reactions are obtained by searching up the ones above with a \ (forward slash)
+            // in front of them i.e. \:calendar_spiral:, need to use these since they're universal 
+            // and you can't react with the :(emoji): formatted emojis. 
+        
+            sent.react('📐');
+            sent.react('⚛️');
+            sent.react('🌎');
+            sent.react('🔤');
+        });
     }
     
     else if (msg.content === '~help') {
