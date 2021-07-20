@@ -22,15 +22,24 @@ async function createUser(msg){ //Creates an entry in both the Players database 
         console.log(`Created user ${player.username}`)
     }catch(e){
         if (e.name === 'SequelizeUniqueConstraintError') {
-            console.log('That tag already exists.');
+            console.log('That tag already exists (Players).');
         }else{
-            console.log('Something went wrong with adding a tag.');
+            console.log('Something went wrong with adding a tag (Players).');
         }
     }
-    const user = await Servers.create({ //Creates a user that holds its username and the server it was created in as fields
-        username: msg.author.tag,
-        serverName: msg.guild.id,
-    })
+    try{
+        const user = await Servers.create({ //Creates a user that holds its username and the server it was created in as fields
+            username: msg.author.tag,
+            serverName: msg.guild.id,
+        })
+    }catch(e){
+        if (e.name === 'SequelizeUniqueConstraintError') {
+            console.log('That tag already exists (Servers).');
+        }else{
+            console.log('Something went wrong with adding a tag (Servers).');
+        }
+    }
+    
 }
 
 //Need this function because I need to be able to use await keyword

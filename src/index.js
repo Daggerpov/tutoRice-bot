@@ -49,7 +49,7 @@ client.on('ready', function () {
 });
 function createUser(msg) {
     return __awaiter(this, void 0, void 0, function () {
-        var player, e_1, user;
+        var player, e_1, user, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -65,19 +65,31 @@ function createUser(msg) {
                 case 2:
                     e_1 = _a.sent();
                     if (e_1.name === 'SequelizeUniqueConstraintError') {
-                        console.log('That tag already exists.');
+                        console.log('That tag already exists (Players).');
                     }
                     else {
-                        console.log('Something went wrong with adding a tag.');
+                        console.log('Something went wrong with adding a tag (Players).');
                     }
                     return [3 /*break*/, 3];
-                case 3: return [4 /*yield*/, Servers.create({
-                        username: msg.author.tag,
-                        serverName: msg.guild.id
-                    })];
+                case 3:
+                    _a.trys.push([3, 5, , 6]);
+                    return [4 /*yield*/, Servers.create({
+                            username: msg.author.tag,
+                            serverName: msg.guild.id
+                        })];
                 case 4:
                     user = _a.sent();
-                    return [2 /*return*/];
+                    return [3 /*break*/, 6];
+                case 5:
+                    e_2 = _a.sent();
+                    if (e_2.name === 'SequelizeUniqueConstraintError') {
+                        console.log('That tag already exists (Servers).');
+                    }
+                    else {
+                        console.log('Something went wrong with adding a tag (Servers).');
+                    }
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
             }
         });
     });
