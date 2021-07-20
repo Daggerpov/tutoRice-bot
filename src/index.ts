@@ -90,15 +90,19 @@ client.on('message', msg => {
         "Geography:",":earth_americas:"+  "\n\n" +
         "English:",":abc:" */
         
-        msg.channel.send({embed: {
-            color: 3447003,
-            title: "Here's our list of subjects you can choose (by reacting) to find a more specific category to play:",
-            fields: [
-            { value: "Mathematics\nSciences\nGeography\nEnglish", inline: true},
-            { value: ":triangular_rule:\:atom:\n:earth_americas\n:abc:", inline: true}
-            ]
-        }
-        }).then(sent =>{
+        let firstTitleLine:string = "Here's our list of subjects you can choose from (by reacting) to find a";
+        let secondTitleLine:string = "more specific category to play:";
+        let amountOfSpaces:number = (firstTitleLine.length - secondTitleLine.length - 2);
+        
+        const playEmbed = new Discord.MessageEmbed()
+        .setColor('0x4286f4')
+        .setTitle(`${firstTitleLine}\n${" ".repeat(amountOfSpaces) + secondTitleLine + " ".repeat(amountOfSpaces)}`)
+        .addFields(    
+            { name: "__Subject__", value: "\nMathematics\n\nSciences\n\nGeography\n\nEnglish", inline: true},
+            { name: "__Emoji__", value: "\n:triangular_ruler:\n\n:atom:\n\n:earth_americas:\n\n:abc:", inline: true}
+        )
+
+        msg.channel.send(playEmbed).then(sent =>{
             playID = sent.id;
             playChannel = sent.channel;
         

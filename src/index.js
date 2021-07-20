@@ -97,7 +97,8 @@ function displayRankings(message) {
                         if (i == 0) {
                             extra += 1;
                         }
-                        arr[i] = { name: ((i + 1).toString()).padEnd('Rank'.length + extra, ' ') + "    **|**  " + users[i] + ": " + riceAmounts[i] + "\n", value: '\u200B',
+                        arr[i] = { name: ((i + 1).toString()).padEnd('Rank'.length + extra, ' ') + "    **|**  " + users[i] + ": " + riceAmounts[i] + "\n",
+                            value: '\u200B',
                             inline: false };
                     }
                     embed = new Discord.MessageEmbed().setColor(0x4286f4).setTitle('__Rank |  Username: Rice Donated__').addFields(arr);
@@ -124,15 +125,14 @@ client.on('message', function (msg) {
             "Sciences:",":atom:" +  "\n\n" +
             "Geography:",":earth_americas:"+  "\n\n" +
             "English:",":abc:" */
-        msg.channel.send({ embed: {
-                color: 3447003,
-                title: "Here's our list of subjects you can choose (by reacting) to find a more specific category to play:",
-                fields: [
-                    { value: "Mathematics\nSciences\nGeography\nEnglish", inline: true },
-                    { value: ":triangular_rule:\:atom:\n:earth_americas\n:abc:", inline: true }
-                ]
-            }
-        }).then(function (sent) {
+        var firstTitleLine = "Here's our list of subjects you can choose from (by reacting) to find a";
+        var secondTitleLine = "more specific category to play:";
+        var amountOfSpaces = (firstTitleLine.length - secondTitleLine.length - 2);
+        var playEmbed = new Discord.MessageEmbed()
+            .setColor('0x4286f4')
+            .setTitle(firstTitleLine + "\n" + (" ".repeat(amountOfSpaces) + secondTitleLine + " ".repeat(amountOfSpaces)))
+            .addFields({ name: "__Subject__", value: "\nMathematics\n\nSciences\n\nGeography\n\nEnglish", inline: true }, { name: "__Emoji__", value: "\n:triangular_ruler:\n\n:atom:\n\n:earth_americas:\n\n:abc:", inline: true });
+        msg.channel.send(playEmbed).then(function (sent) {
             playID = sent.id;
             playChannel = sent.channel;
             // these reactions are obtained by searching up the ones above with a \ (forward slash)
