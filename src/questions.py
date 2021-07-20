@@ -2,6 +2,6 @@ import sys
 
 emoji = sys.argv[1]
 def questions():
-    print("working!")
+    print(emoji)
 
 questions()
