@@ -85,7 +85,7 @@ client.on('message', msg => {
     }
     else if (msg.content === '~play') {
 
-        createUser(msg.author.tag); //Creates a user in the database, does nothing if player is already in database
+        createUser(msg); //Creates a user in the database, does nothing if player is already in database
     /*     'Here is a list of categories you can choose (by reacting) to play through the freerice bot: \n\n' +
         "Mathematics:",":triangular_ruler:"+  "\n\n" +
         "Sciences:",":atom:" +  "\n\n" +
@@ -189,15 +189,17 @@ const Player = sequelize.define('Player' ,{
 });
 
 const Servers = sequelize.define('Servers', {
-    username: { //Tag of the user is a foreign key from the player database
+    username: { //Tag of the user is a foreign key from the player database, composite unique key with serverName
         type: Sequelize.STRING,
         references: {
             model: 'players',
             key: 'username',
         },
+        unique: 'compositeIndex',
     },
-    serverName: { //The server that the user was created in
+    serverName: { //The server that the user was created in, composite unique key with username
         type: Sequelize.STRING,
+        unique: 'compositeIndex',
     },
 });
 

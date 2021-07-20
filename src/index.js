@@ -146,7 +146,7 @@ client.on('message', function (msg) {
         displayRankings(msg);
     }
     else if (msg.content === '~play') {
-        createUser(msg.author.tag); //Creates a user in the database, does nothing if player is already in database
+        createUser(msg); //Creates a user in the database, does nothing if player is already in database
         /*     'Here is a list of categories you can choose (by reacting) to play through the freerice bot: \n\n' +
             "Mathematics:",":triangular_ruler:"+  "\n\n" +
             "Sciences:",":atom:" +  "\n\n" +
@@ -239,10 +239,12 @@ var Servers = sequelize.define('Servers', {
         references: {
             model: 'players',
             key: 'username'
-        }
+        },
+        unique: 'compositeIndex'
     },
     serverName: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        unique: 'compositeIndex'
     }
 });
 Player.hasMany(Servers); //Creates a one-to-many table relationship between Player and Servers
