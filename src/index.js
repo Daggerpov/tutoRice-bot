@@ -42,9 +42,9 @@ var client = new Discord.Client();
 var Sequelize = require('sequelize');
 var spawn = require('child_process').spawn;
 var playID, playChannel, scrapeOutput;
-// for multi embed pages
-var recon = require('reconlx');
-var ReactionPages = recon.ReactionPages;
+var MessageButton = require("discord-buttons").MessageButton;
+require("discord-buttons")(client);
+var fs = require('fs');
 //client.prefix = "~";
 client.on('ready', function () {
     console.log("Logged in as " + client.user.tag + "!");
@@ -138,9 +138,11 @@ function displayRankings(message) {
                         if (i == 0) {
                             extra += 1;
                         }
-                        arr[i] = { name: ((i + 1).toString()).padEnd('Rank'.length + extra, ' ') + "    **|**  " + playerList[i] + ": " + riceAmounts[i] + "\n",
+                        arr[i] = {
+                            name: ((i + 1).toString()).padEnd('Rank'.length + extra, ' ') + "    **|**  " + playerList[i] + ": " + riceAmounts[i] + "\n",
                             value: '\u200B',
-                            inline: false };
+                            inline: false
+                        };
                     }
                     embed = new Discord.MessageEmbed().setColor(0x4286f4).setTitle('__Rank |  Username: Rice Donated__').addFields(arr);
                     // message.channel.send(table);
@@ -152,18 +154,87 @@ function displayRankings(message) {
 }
 ;
 function selectCategory(subject) {
-    var category = 'asdf';
-    return category;
+    var exitButton = new MessageButton()
+        .setStyle("blurple")
+        .setID("exit")
+        .setLabel("↩️");
+    var backButton = new MessageButton()
+        .setStyle("blurple")
+        .setID("back")
+        .setLabel("👈");
+    var selectButton = new MessageButton()
+        .setStyle("blurple")
+        .setID("select")
+        .setLabel("☑️");
+    var nextButton = new MessageButton()
+        .setStyle("blurple")
+        .setID("next")
+        .setLabel("👉");
+    var buttonArray = [exitButton, backButton, selectButton, nextButton];
+    switch (subject) {
+        case '📐':
+            var write_questions = spawn('python', ['src/write_questions.py']);
+            //Listens to output from write_questions.py
+            write_questions.stdout.on('data', function (data) {
+                console.log("" + data);
+            });
+            write_questions.stderr.on('data', function (data) {
+                console.log("" + data);
+            });
+            var embedArray = [];
+            var dir_1 = fs.readdirSync('./src/answers/Mathematics/');
+            var fileNum = dir_1.length;
+            function readFiles(dirname, onFileContent, onError) {
+                fs.readdir(dirname, function (err, filenames) {
+                    if (err) {
+                        onError(err);
+                        return;
+                    }
+                    filenames.forEach(function (filename) {
+                        fs.readFile(dirname + filename, 'utf-8', function (err, content) {
+                            if (err) {
+                                onError(err);
+                                return;
+                            }
+                            onFileContent(filename, content);
+                        });
+                    });
+                });
+            }
+            var data = {};
+            readFiles('./src/answers/Mathematics/', function (filename, content) {
+                data[filename] = content;
+                console.log(filename, content);
+            }, function (err) {
+                throw err;
+            });
+            console.log(data);
+            break;
+        case '⚛️':
+            var PhysicsCategory = selectCategory('⚛️');
+            question_category(PhysicsCategory);
+            break;
+        case '🌎':
+            var GeographyCategory = selectCategory('🌎');
+            question_category(GeographyCategory);
+            break;
+        case '🔤':
+            var EnglishCategory = selectCategory('🔤');
+            question_category(EnglishCategory);
+            break;
+    }
+    return 'asdf';
 }
 client.on('message', function (msg) {
-    if (msg.content === '~freerice') {
+    msg.content = msg.content.toUpperCase();
+    if (msg.content === '~FREERICE') {
         //var txt = "here";
         msg.reply("This free discord bot allows discord users to earn rice grains from freerice.com within the app to help people in need from around the world. You can read up on what freerice is about here: https://freerice.com/about."); // + txt.link("https://freerice.com/about").get("href");
     }
-    else if (msg.content === '~rankings') {
+    else if (msg.content === '~RANKINGS') {
         displayRankings(msg);
     }
-    else if (msg.content === '~play') {
+    else if (msg.content === '~PLAY') {
         createUser(msg); //Creates a user in the database, does nothing if player is already in database
         /*     'Here is a list of categories you can choose (by reacting) to play through the freerice bot: \n\n' +
             "Mathematics:",":triangular_ruler:"+  "\n\n" +
@@ -191,21 +262,23 @@ client.on('message', function (msg) {
             sent.react('🔤');
         });
     }
-    else if (msg.content === '~help') {
+    else if (msg.content === '~HELP') {
         var helpEmbed = new Discord.MessageEmbed()
             .setColor('0x4286f4')
             .setTitle("__Below is a list of available commands__")
             .addFields(
         // \u200B is to add a blank field. inline being true means these two fields are on the same line
-        { name: '\u200B' /* "__Subject__" */, value: "~freerice\n\n~play\n\n~rankings", inline: true }, { name: '\u200B' /* "__Emoji__" */, value: "|  description of the bot and its purpose\n\n" +
-                "|  play with the freerice bot by answering questions to earn rice\n\n|  see the current server-wide rankings for users' rice earned", inline: true });
+        { name: '\u200B' /* "__Subject__" */, value: "~freerice\n\n~play\n\n~rankings", inline: true }, {
+            name: '\u200B' /* "__Emoji__" */, value: "|  description of the bot and its purpose\n\n" +
+                "|  play with the freerice bot by answering questions to earn rice\n\n|  see the current server-wide rankings for users' rice earned", inline: true
+        });
         msg.channel.send(helpEmbed);
     }
 });
 function question_category(category) {
-    //Sends url to scrape.py
+    //starts up python file and sends category arg
     var questions = spawn('python', ['src/questions.py', category]);
-    //Listens to output from scrape.py
+    //Listens to output from questions.py
     questions.stdout.on('data', function (data) {
         console.log("" + data);
     });
@@ -220,17 +293,20 @@ client.on('messageReactionAdd', function (reaction, user) {
     if (reaction.message.id === playID && user.tag !== 'freerice#4898') {
         switch (name) {
             case '📐':
-                var category = selectCategory('📐');
-                question_category(category);
+                var MathematicsCategory = selectCategory('📐');
+                question_category(MathematicsCategory);
                 break;
             case '⚛️':
-                question_category('⚛️');
+                var PhysicsCategory = selectCategory('⚛️');
+                question_category(PhysicsCategory);
                 break;
             case '🌎':
-                question_category('🌎');
+                var GeographyCategory = selectCategory('🌎');
+                question_category(GeographyCategory);
                 break;
             case '🔤':
-                question_category('🔤');
+                var EnglishCategory = selectCategory('🔤');
+                question_category(EnglishCategory);
                 break;
         }
     }
