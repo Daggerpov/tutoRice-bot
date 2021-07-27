@@ -37,10 +37,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 require('dotenv').config();
+var child_process_1 = require("child_process");
 var Discord = require("discord.js");
 var client = new Discord.Client();
 var Sequelize = require('sequelize');
-var spawn = require('child_process').spawn;
+var cp = require('child_process');
 var playID, playChannel, scrapeOutput;
 var MessageButton = require("discord-buttons").MessageButton;
 require("discord-buttons")(client);
@@ -155,10 +156,11 @@ function displayRankings(message) {
 ;
 function selectCategory(subject, message) {
     return __awaiter(this, void 0, void 0, function () {
-        var exitButton, backButton, selectButton, nextButton, buttonArray, overviewEmbed, mybuttonsmsg, embedsarray, embedArray, files, write_questions, i, currentPage_1, collector;
+        var write_questions, exitButton, backButton, selectButton, nextButton, buttonArray, overviewEmbed, mybuttonsmsg, embedsarray, embedArray, files, i, currentPage_1, collector;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    write_questions = child_process_1.spawnSync('python', ['src/write_questions.py', subject], { stdio: 'inherit' });
                     exitButton = new MessageButton()
                         .setStyle("blurple")
                         .setID("exit")
@@ -185,14 +187,13 @@ function selectCategory(subject, message) {
                         case '📐':
                             embedArray = [];
                             files = fs.readdirSync("./answers/" + subject + "/");
-                            write_questions = spawn('python', ['src/write_questions.py', subject]);
                             //Listens to output from write_questions.py
-                            write_questions.stdout.on('data', function (data) {
-                                console.log("" + data);
-                            });
-                            write_questions.stderr.on('data', function (data) {
-                                console.log("" + data);
-                            });
+                            // write_questions.stdout.on('data', function (data) {
+                            //     console.log("" + data);
+                            // });
+                            // write_questions.stderr.on('data', function (data) {
+                            //     console.log("" + data);
+                            // });
                             for (i = 0; i < files.length; i++) {
                                 embedsarray.push(new Discord.MessageEmbed()
                                     .setColor('0x4286f4')
@@ -204,10 +205,9 @@ function selectCategory(subject, message) {
                             collector.on("collect", function (b) {
                                 b.defer();
                                 if (b.id == "3") {
-                                    currentPage_1 = 0;
-                                    mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
+                                    //pass
                                 }
-                                else if (b.id == "1") {
+                                else if (b.id == "2") {
                                     if (currentPage_1 !== 0) {
                                         --currentPage_1;
                                         mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
@@ -217,7 +217,7 @@ function selectCategory(subject, message) {
                                         mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
                                     }
                                 }
-                                else if (b.id == "2") {
+                                else if (b.id == "4") {
                                     if (currentPage_1 < embedsarray.length - 1) {
                                         currentPage_1++;
                                         mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
@@ -299,14 +299,14 @@ client.on('message', function (msg) {
 });
 function question_category(category) {
     //starts up python file and sends category arg
-    var questions = spawn('python', ['src/questions.py', category]);
+    var questions = child_process_1.spawnSync('python', ['src/questions.py', category], { stdio: 'inherit' });
     //Listens to output from questions.py
-    questions.stdout.on('data', function (data) {
-        console.log("" + data);
-    });
-    questions.stderr.on('data', function (data) {
-        console.log("" + data);
-    });
+    // questions.stdout.on('data', function (data) {
+    //     console.log("" + data);
+    // });
+    // questions.stderr.on('data', function (data) {
+    //     console.log("" + data);
+    // });
 }
 //Finds the reactions to ~play message and calls the scrape function from scrape.py
 client.on('messageReactionAdd', function (reaction, user) {
@@ -317,19 +317,19 @@ client.on('messageReactionAdd', function (reaction, user) {
         switch (name) {
             case '📐':
                 var MathematicsCategory = selectCategory('📐', reaction.message);
-                question_category(MathematicsCategory);
+                //question_category(MathematicsCategory);
                 break;
             case '⚛️':
                 var PhysicsCategory = selectCategory('⚛️', reaction.message);
-                question_category(PhysicsCategory);
+                //question_category(PhysicsCategory);
                 break;
             case '🌎':
                 var GeographyCategory = selectCategory('🌎', reaction.message);
-                question_category(GeographyCategory);
+                //question_category(GeographyCategory);
                 break;
             case '🔤':
                 var EnglishCategory = selectCategory('🔤', reaction.message);
-                question_category(EnglishCategory);
+                //question_category(EnglishCategory);
                 break;
         }
     }

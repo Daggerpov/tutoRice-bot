@@ -1,11 +1,12 @@
 require('dotenv').config();
+import { spawnSync } from 'child_process';
 import { dir } from 'console';
 import * as Discord from 'discord.js';
 import { fstat } from 'node:fs';
 import { PassThrough } from 'node:stream';
 const client = new Discord.Client();
 const Sequelize = require('sequelize');
-const { spawn } = require('child_process');
+const cp = require('child_process');
 let playID, playChannel, scrapeOutput;
 const { MessageButton } = require("discord-buttons")
 require("discord-buttons")(client);
@@ -92,6 +93,8 @@ async function displayRankings(message) { //Not formatted properly yet
 };
 
 async function selectCategory(subject: string, message) {
+    const write_questions = spawnSync('python', ['src/write_questions.py', subject], {stdio: 'inherit'})
+    
     let exitButton = new MessageButton()
         .setStyle("blurple")
         .setID("exit")
@@ -122,14 +125,14 @@ async function selectCategory(subject: string, message) {
 
             let files = fs.readdirSync(`./answers/${subject}/`);
 
-            const write_questions = spawn('python', ['src/write_questions.py', subject]);
+            
             //Listens to output from write_questions.py
-            write_questions.stdout.on('data', function (data) {
-                console.log("" + data);
-            });
-            write_questions.stderr.on('data', function (data) {
-                console.log("" + data);
-            });
+            // write_questions.stdout.on('data', function (data) {
+            //     console.log("" + data);
+            // });
+            // write_questions.stderr.on('data', function (data) {
+            //     console.log("" + data);
+            // });
 
             for (let i = 0; i < files.length; i++){
                 embedsarray.push(new Discord.MessageEmbed()
@@ -146,10 +149,9 @@ async function selectCategory(subject: string, message) {
             collector.on("collect", (b) => {
                 b.defer();
                 if(b.id == "3"){
-                    currentPage = 0;
-                    mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
+                    //pass
                 }
-                else if(b.id == "1"){
+                else if(b.id == "2"){
                     if(currentPage !== 0){
                         --currentPage;
                         mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
@@ -158,7 +160,7 @@ async function selectCategory(subject: string, message) {
                         mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
                     }
                 }
-                else if(b.id == "2"){
+                else if(b.id == "4"){
                     if(currentPage < embedsarray.length - 1){
                         currentPage++;
                         mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
@@ -254,15 +256,15 @@ client.on('message', msg => {
 
 function question_category(category: string) {
     //starts up python file and sends category arg
-    const questions = spawn('python', ['src/questions.py', category]);
+    const questions = spawnSync('python', ['src/questions.py', category], {stdio: 'inherit'});
 
     //Listens to output from questions.py
-    questions.stdout.on('data', function (data) {
-        console.log("" + data);
-    });
-    questions.stderr.on('data', function (data) {
-        console.log("" + data);
-    });
+    // questions.stdout.on('data', function (data) {
+    //     console.log("" + data);
+    // });
+    // questions.stderr.on('data', function (data) {
+    //     console.log("" + data);
+    // });
 }
 
 //Finds the reactions to ~play message and calls the scrape function from scrape.py
@@ -274,19 +276,19 @@ client.on('messageReactionAdd', (reaction, user) => {
         switch (name) {
             case '📐':
                 let MathematicsCategory = selectCategory('📐', reaction.message);
-                question_category(MathematicsCategory);
+                //question_category(MathematicsCategory);
                 break;
             case '⚛️':
                 let PhysicsCategory = selectCategory('⚛️', reaction.message);
-                question_category(PhysicsCategory);
+                //question_category(PhysicsCategory);
                 break;
             case '🌎':
                 let GeographyCategory = selectCategory('🌎', reaction.message);
-                question_category(GeographyCategory);
+                //question_category(GeographyCategory);
                 break;
             case '🔤':
                 let EnglishCategory = selectCategory('🔤', reaction.message);
-                question_category(EnglishCategory);
+                //question_category(EnglishCategory);
                 break;
         }
     }
