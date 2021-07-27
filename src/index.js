@@ -37,10 +37,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 require('dotenv').config();
+var child_process_1 = require("child_process");
 var Discord = require("discord.js");
 var client = new Discord.Client();
 var Sequelize = require('sequelize');
-var spawn = require('child_process').spawn;
+var cp = require('child_process');
 var playID, playChannel, scrapeOutput;
 var MessageButton = require("discord-buttons").MessageButton;
 require("discord-buttons")(client);
@@ -153,77 +154,98 @@ function displayRankings(message) {
     });
 }
 ;
-function selectCategory(subject) {
-    var exitButton = new MessageButton()
-        .setStyle("blurple")
-        .setID("exit")
-        .setLabel("↩️");
-    var backButton = new MessageButton()
-        .setStyle("blurple")
-        .setID("back")
-        .setLabel("👈");
-    var selectButton = new MessageButton()
-        .setStyle("blurple")
-        .setID("select")
-        .setLabel("☑️");
-    var nextButton = new MessageButton()
-        .setStyle("blurple")
-        .setID("next")
-        .setLabel("👉");
-    var buttonArray = [exitButton, backButton, selectButton, nextButton];
-    switch (subject) {
-        case '📐':
-            var write_questions = spawn('python', ['src/write_questions.py']);
-            //Listens to output from write_questions.py
-            write_questions.stdout.on('data', function (data) {
-                console.log("" + data);
-            });
-            write_questions.stderr.on('data', function (data) {
-                console.log("" + data);
-            });
-            var embedArray = [];
-            var dir_1 = fs.readdirSync('./src/answers/Mathematics/');
-            var fileNum = dir_1.length;
-            function readFiles(dirname, onFileContent, onError) {
-                fs.readdir(dirname, function (err, filenames) {
-                    if (err) {
-                        onError(err);
-                        return;
-                    }
-                    filenames.forEach(function (filename) {
-                        fs.readFile(dirname + filename, 'utf-8', function (err, content) {
-                            if (err) {
-                                onError(err);
-                                return;
+function selectCategory(subject, message) {
+    return __awaiter(this, void 0, void 0, function () {
+        var write_questions, exitButton, backButton, selectButton, nextButton, buttonArray, overviewEmbed, mybuttonsmsg, embedsarray, embedArray, files, i, currentPage_1, collector;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    write_questions = child_process_1.spawnSync('python', ['src/write_questions.py', subject], { stdio: 'inherit' });
+                    exitButton = new MessageButton()
+                        .setStyle("blurple")
+                        .setID("exit")
+                        .setLabel("↩️");
+                    backButton = new MessageButton()
+                        .setStyle("blurple")
+                        .setID("back")
+                        .setLabel("👈");
+                    selectButton = new MessageButton()
+                        .setStyle("blurple")
+                        .setID("select")
+                        .setLabel("☑️");
+                    nextButton = new MessageButton()
+                        .setStyle("blurple")
+                        .setID("next")
+                        .setLabel("👉");
+                    buttonArray = [exitButton, backButton, selectButton, nextButton];
+                    overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:");
+                    return [4 /*yield*/, message.channel.send({ embed: overviewEmbed, buttons: buttonArray })];
+                case 1:
+                    mybuttonsmsg = _a.sent();
+                    embedsarray = [];
+                    switch (subject) {
+                        case '📐':
+                            embedArray = [];
+                            files = fs.readdirSync("./answers/" + subject + "/");
+                            //Listens to output from write_questions.py
+                            // write_questions.stdout.on('data', function (data) {
+                            //     console.log("" + data);
+                            // });
+                            // write_questions.stderr.on('data', function (data) {
+                            //     console.log("" + data);
+                            // });
+                            for (i = 0; i < files.length; i++) {
+                                embedsarray.push(new Discord.MessageEmbed()
+                                    .setColor('0x4286f4')
+                                    .setTitle("" + files[0])
+                                    .setDescription(i));
                             }
-                            onFileContent(filename, content);
-                        });
-                    });
-                });
+                            currentPage_1 = 0;
+                            collector = mybuttonsmsg.createButtonCollector(function (button) { return button.clicker.user.id === message.author.id; }, { time: 60e3 });
+                            collector.on("collect", function (b) {
+                                b.defer();
+                                if (b.id == "3") {
+                                    //pass
+                                }
+                                else if (b.id == "2") {
+                                    if (currentPage_1 !== 0) {
+                                        --currentPage_1;
+                                        mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
+                                    }
+                                    else {
+                                        currentPage_1 = embedsarray.length - 1;
+                                        mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
+                                    }
+                                }
+                                else if (b.id == "4") {
+                                    if (currentPage_1 < embedsarray.length - 1) {
+                                        currentPage_1++;
+                                        mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
+                                    }
+                                    else {
+                                        currentPage_1 = 0;
+                                        mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
+                                    }
+                                }
+                            });
+                            break;
+                        case '⚛️':
+                            // let PhysicsCategory = selectCategory('⚛️');
+                            // question_category(PhysicsCategory);
+                            break;
+                        case '🌎':
+                            // let GeographyCategory = selectCategory('🌎');
+                            // question_category(GeographyCategory);
+                            break;
+                        case '🔤':
+                            // let EnglishCategory = selectCategory('🔤');
+                            // question_category(EnglishCategory);
+                            break;
+                    }
+                    return [2 /*return*/, 'asdf'];
             }
-            var data = {};
-            readFiles('./src/answers/Mathematics/', function (filename, content) {
-                data[filename] = content;
-                console.log(filename, content);
-            }, function (err) {
-                throw err;
-            });
-            console.log(data);
-            break;
-        case '⚛️':
-            var PhysicsCategory = selectCategory('⚛️');
-            question_category(PhysicsCategory);
-            break;
-        case '🌎':
-            var GeographyCategory = selectCategory('🌎');
-            question_category(GeographyCategory);
-            break;
-        case '🔤':
-            var EnglishCategory = selectCategory('🔤');
-            question_category(EnglishCategory);
-            break;
-    }
-    return 'asdf';
+        });
+    });
 }
 client.on('message', function (msg) {
     msg.content = msg.content.toUpperCase();
@@ -277,36 +299,37 @@ client.on('message', function (msg) {
 });
 function question_category(category) {
     //starts up python file and sends category arg
-    var questions = spawn('python', ['src/questions.py', category]);
+    var questions = child_process_1.spawnSync('python', ['src/questions.py', category], { stdio: 'inherit' });
     //Listens to output from questions.py
-    questions.stdout.on('data', function (data) {
-        console.log("" + data);
-    });
-    questions.stderr.on('data', function (data) {
-        console.log("" + data);
-    });
+    // questions.stdout.on('data', function (data) {
+    //     console.log("" + data);
+    // });
+    // questions.stderr.on('data', function (data) {
+    //     console.log("" + data);
+    // });
 }
 //Finds the reactions to ~play message and calls the scrape function from scrape.py
 client.on('messageReactionAdd', function (reaction, user) {
     var name = reaction.emoji.name;
     var member = reaction.message.guild.members.cache.get(user.id);
     if (reaction.message.id === playID && user.tag !== 'freerice#4898') {
+        reaction.message.reactions.removeAll()["catch"](function (error) { return console.error('Failed to clear reactions: ', error); });
         switch (name) {
             case '📐':
-                var MathematicsCategory = selectCategory('📐');
-                question_category(MathematicsCategory);
+                var MathematicsCategory = selectCategory('📐', reaction.message);
+                //question_category(MathematicsCategory);
                 break;
             case '⚛️':
-                var PhysicsCategory = selectCategory('⚛️');
-                question_category(PhysicsCategory);
+                var PhysicsCategory = selectCategory('⚛️', reaction.message);
+                //question_category(PhysicsCategory);
                 break;
             case '🌎':
-                var GeographyCategory = selectCategory('🌎');
-                question_category(GeographyCategory);
+                var GeographyCategory = selectCategory('🌎', reaction.message);
+                //question_category(GeographyCategory);
                 break;
             case '🔤':
-                var EnglishCategory = selectCategory('🔤');
-                question_category(EnglishCategory);
+                var EnglishCategory = selectCategory('🔤', reaction.message);
+                //question_category(EnglishCategory);
                 break;
         }
     }

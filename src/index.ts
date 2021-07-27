@@ -1,11 +1,12 @@
 require('dotenv').config();
+import { spawnSync } from 'child_process';
 import { dir } from 'console';
 import * as Discord from 'discord.js';
 import { fstat } from 'node:fs';
 import { PassThrough } from 'node:stream';
 const client = new Discord.Client();
 const Sequelize = require('sequelize');
-const { spawn } = require('child_process');
+const cp = require('child_process');
 let playID, playChannel, scrapeOutput;
 const { MessageButton } = require("discord-buttons")
 require("discord-buttons")(client);
@@ -91,7 +92,9 @@ async function displayRankings(message) { //Not formatted properly yet
     message.channel.send(embed);
 };
 
-function selectCategory(subject: string) {
+async function selectCategory(subject: string, message) {
+    const write_questions = spawnSync('python', ['src/write_questions.py', subject], {stdio: 'inherit'})
+    
     let exitButton = new MessageButton()
         .setStyle("blurple")
         .setID("exit")
@@ -110,61 +113,80 @@ function selectCategory(subject: string) {
         .setLabel("👉")
     const buttonArray = [exitButton, backButton, selectButton, nextButton];
 
+    let overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:")
+
+    let mybuttonsmsg = await message.channel.send({ embed: overviewEmbed, buttons: buttonArray })
+
+    const embedsarray = []
+
     switch (subject) {
         case '📐':
-            const write_questions = spawn('python', ['src/write_questions.py']);
-            //Listens to output from write_questions.py
-            write_questions.stdout.on('data', function (data) {
-                console.log("" + data);
-            });
-            write_questions.stderr.on('data', function (data) {
-                console.log("" + data);
-            });
-
             const embedArray = [];
 
+            let files = fs.readdirSync(`./answers/${subject}/`);
+
             
-            let dir = fs.readdirSync('./src/answers/Mathematics/')
-            let fileNum = dir.length
-            function readFiles(dirname, onFileContent, onError) {
-                fs.readdir(dirname, function (err, filenames) {
-                    if (err) {
-                        onError(err);
-                        return;
-                    }
-                    filenames.forEach(function (filename) {
-                        fs.readFile(dirname + filename, 'utf-8', function (err, content) {
-                            if (err) {
-                                onError(err);
-                                return;
-                            }
-                            onFileContent(filename, content);
-                        });
-                    });
-                });
+            //Listens to output from write_questions.py
+            // write_questions.stdout.on('data', function (data) {
+            //     console.log("" + data);
+            // });
+            // write_questions.stderr.on('data', function (data) {
+            //     console.log("" + data);
+            // });
+
+            for (let i = 0; i < files.length; i++){
+                embedsarray.push(new Discord.MessageEmbed()
+                .setColor('0x4286f4')
+                .setTitle(`${files[0]}`)
+                .setDescription(i)
+                )
             }
-            var data = {};
-            readFiles('./src/answers/Mathematics/', function(filename, content) {
-                data[filename] = content;
-                console.log(filename, content);
-            }, function(err) {
-                throw err;
-            });
-            console.log(data);
+
+            let currentPage:number = 0;
+
+            const collector = mybuttonsmsg.createButtonCollector((button)=> button.clicker.user.id === message.author.id, {time: 60e3});
+
+            collector.on("collect", (b) => {
+                b.defer();
+                if(b.id == "3"){
+                    //pass
+                }
+                else if(b.id == "2"){
+                    if(currentPage !== 0){
+                        --currentPage;
+                        mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
+                    }else {
+                        currentPage = embedsarray.length - 1;
+                        mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
+                    }
+                }
+                else if(b.id == "4"){
+                    if(currentPage < embedsarray.length - 1){
+                        currentPage++;
+                        mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
+                    }else {
+                        currentPage = 0;
+                        mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
+                    }
+                }
+            })
+
+            
+
 
 
             break;
         case '⚛️':
-            let PhysicsCategory = selectCategory('⚛️');
-            question_category(PhysicsCategory);
+            // let PhysicsCategory = selectCategory('⚛️');
+            // question_category(PhysicsCategory);
             break;
         case '🌎':
-            let GeographyCategory = selectCategory('🌎');
-            question_category(GeographyCategory);
+            // let GeographyCategory = selectCategory('🌎');
+            // question_category(GeographyCategory);
             break;
         case '🔤':
-            let EnglishCategory = selectCategory('🔤');
-            question_category(EnglishCategory);
+            // let EnglishCategory = selectCategory('🔤');
+            // question_category(EnglishCategory);
             break;
     }
     return 'asdf';
@@ -234,15 +256,15 @@ client.on('message', msg => {
 
 function question_category(category: string) {
     //starts up python file and sends category arg
-    const questions = spawn('python', ['src/questions.py', category]);
+    const questions = spawnSync('python', ['src/questions.py', category], {stdio: 'inherit'});
 
     //Listens to output from questions.py
-    questions.stdout.on('data', function (data) {
-        console.log("" + data);
-    });
-    questions.stderr.on('data', function (data) {
-        console.log("" + data);
-    });
+    // questions.stdout.on('data', function (data) {
+    //     console.log("" + data);
+    // });
+    // questions.stderr.on('data', function (data) {
+    //     console.log("" + data);
+    // });
 }
 
 //Finds the reactions to ~play message and calls the scrape function from scrape.py
@@ -250,22 +272,23 @@ client.on('messageReactionAdd', (reaction, user) => {
     let { name } = reaction.emoji;
     let member = reaction.message.guild.members.cache.get(user.id);
     if (reaction.message.id === playID && user.tag !== 'freerice#4898') {
+        reaction.message.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
         switch (name) {
             case '📐':
-                let MathematicsCategory = selectCategory('📐');
-                question_category(MathematicsCategory);
+                let MathematicsCategory = selectCategory('📐', reaction.message);
+                //question_category(MathematicsCategory);
                 break;
             case '⚛️':
-                let PhysicsCategory = selectCategory('⚛️');
-                question_category(PhysicsCategory);
+                let PhysicsCategory = selectCategory('⚛️', reaction.message);
+                //question_category(PhysicsCategory);
                 break;
             case '🌎':
-                let GeographyCategory = selectCategory('🌎');
-                question_category(GeographyCategory);
+                let GeographyCategory = selectCategory('🌎', reaction.message);
+                //question_category(GeographyCategory);
                 break;
             case '🔤':
-                let EnglishCategory = selectCategory('🔤');
-                question_category(EnglishCategory);
+                let EnglishCategory = selectCategory('🔤', reaction.message);
+                //question_category(EnglishCategory);
                 break;
         }
     }
