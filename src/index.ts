@@ -91,7 +91,7 @@ async function displayRankings(message) { //Not formatted properly yet
     message.channel.send(embed);
 };
 
-function selectCategory(subject: string) {
+async function selectCategory(subject: string, message) {
     let exitButton = new MessageButton()
         .setStyle("blurple")
         .setID("exit")
@@ -110,9 +110,19 @@ function selectCategory(subject: string) {
         .setLabel("👉")
     const buttonArray = [exitButton, backButton, selectButton, nextButton];
 
+    let overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:")
+
+    let mybuttonsmsg = await message.channel.send({ embed: overviewEmbed, buttons: buttonArray })
+
+    const embedsarray = []
+
     switch (subject) {
         case '📐':
-            const write_questions = spawn('python', ['src/write_questions.py']);
+            const embedArray = [];
+
+            let files = fs.readdirSync(`./answers/${subject}/`);
+
+            const write_questions = spawn('python', ['src/write_questions.py', subject]);
             //Listens to output from write_questions.py
             write_questions.stdout.on('data', function (data) {
                 console.log("" + data);
@@ -121,50 +131,60 @@ function selectCategory(subject: string) {
                 console.log("" + data);
             });
 
-            const embedArray = [];
+            for (let i = 0; i < files.length; i++){
+                embedsarray.push(new Discord.MessageEmbed()
+                .setColor('0x4286f4')
+                .setTitle(`${files[0]}`)
+                .setDescription(i)
+                )
+            }
+
+            let currentPage:number = 0;
+
+            const collector = mybuttonsmsg.createButtonCollector((button)=> button.clicker.user.id === message.author.id, {time: 60e3});
+
+            collector.on("collect", (b) => {
+                b.defer();
+                if(b.id == "3"){
+                    currentPage = 0;
+                    mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
+                }
+                else if(b.id == "1"){
+                    if(currentPage !== 0){
+                        --currentPage;
+                        mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
+                    }else {
+                        currentPage = embedsarray.length - 1;
+                        mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
+                    }
+                }
+                else if(b.id == "2"){
+                    if(currentPage < embedsarray.length - 1){
+                        currentPage++;
+                        mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
+                    }else {
+                        currentPage = 0;
+                        mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
+                    }
+                }
+            })
 
             
-            let dir = fs.readdirSync('./src/answers/Mathematics/')
-            let fileNum = dir.length
-            function readFiles(dirname, onFileContent, onError) {
-                fs.readdir(dirname, function (err, filenames) {
-                    if (err) {
-                        onError(err);
-                        return;
-                    }
-                    filenames.forEach(function (filename) {
-                        fs.readFile(dirname + filename, 'utf-8', function (err, content) {
-                            if (err) {
-                                onError(err);
-                                return;
-                            }
-                            onFileContent(filename, content);
-                        });
-                    });
-                });
-            }
-            var data = {};
-            readFiles('./src/answers/Mathematics/', function(filename, content) {
-                data[filename] = content;
-                console.log(filename, content);
-            }, function(err) {
-                throw err;
-            });
-            console.log(data);
+
 
 
             break;
         case '⚛️':
-            let PhysicsCategory = selectCategory('⚛️');
-            question_category(PhysicsCategory);
+            // let PhysicsCategory = selectCategory('⚛️');
+            // question_category(PhysicsCategory);
             break;
         case '🌎':
-            let GeographyCategory = selectCategory('🌎');
-            question_category(GeographyCategory);
+            // let GeographyCategory = selectCategory('🌎');
+            // question_category(GeographyCategory);
             break;
         case '🔤':
-            let EnglishCategory = selectCategory('🔤');
-            question_category(EnglishCategory);
+            // let EnglishCategory = selectCategory('🔤');
+            // question_category(EnglishCategory);
             break;
     }
     return 'asdf';
@@ -250,21 +270,22 @@ client.on('messageReactionAdd', (reaction, user) => {
     let { name } = reaction.emoji;
     let member = reaction.message.guild.members.cache.get(user.id);
     if (reaction.message.id === playID && user.tag !== 'freerice#4898') {
+        reaction.message.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
         switch (name) {
             case '📐':
-                let MathematicsCategory = selectCategory('📐');
+                let MathematicsCategory = selectCategory('📐', reaction.message);
                 question_category(MathematicsCategory);
                 break;
             case '⚛️':
-                let PhysicsCategory = selectCategory('⚛️');
+                let PhysicsCategory = selectCategory('⚛️', reaction.message);
                 question_category(PhysicsCategory);
                 break;
             case '🌎':
-                let GeographyCategory = selectCategory('🌎');
+                let GeographyCategory = selectCategory('🌎', reaction.message);
                 question_category(GeographyCategory);
                 break;
             case '🔤':
-                let EnglishCategory = selectCategory('🔤');
+                let EnglishCategory = selectCategory('🔤', reaction.message);
                 question_category(EnglishCategory);
                 break;
         }
