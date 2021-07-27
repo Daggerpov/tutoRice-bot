@@ -154,6 +154,28 @@ function displayRankings(message) {
     });
 }
 ;
+function sendPlay(msg) {
+    var firstTitleLine = "__Here's our list of subjects you can choose from (by reacting)__";
+    var secondTitleLine = "__to find a more specific category to play__";
+    var amountOfSpaces = (firstTitleLine.replace('_', '').length - secondTitleLine.replace('_', '').length);
+    var playEmbed = new Discord.MessageEmbed()
+        .setColor('0x4286f4')
+        .setTitle(firstTitleLine + "\n" + (" ".repeat(amountOfSpaces) + secondTitleLine + " ".repeat(amountOfSpaces)))
+        .addFields(
+    // \u200B is to add a blank field. inline being true means these two fields are on the same line
+    { name: '\u200B' /* "__Subject__" */, value: "Mathematics:\n\nSciences:\n\nGeography:\n\nEnglish:", inline: true }, { name: '\u200B' /* "__Emoji__" */, value: ":triangular_ruler:\n\n:atom:\n\n:earth_americas:\n\n:abc:", inline: true });
+    msg.channel.send(playEmbed).then(function (sent) {
+        playID = sent.id;
+        playChannel = sent.channel;
+        // these reactions are obtained by searching up the ones above with a \ (forward slash)
+        // in front of them i.e. \:calendar_spiral:, need to use these since they're universal 
+        // and you can't react with the :(emoji): formatted emojis. 
+        sent.react('📐');
+        sent.react('⚛️');
+        sent.react('🌎');
+        sent.react('🔤');
+    });
+}
 function selectCategory(subject, message) {
     return __awaiter(this, void 0, void 0, function () {
         var write_questions, exitButton, backButton, selectButton, nextButton, buttonArray, overviewEmbed, mybuttonsmsg, embedsarray, embedArray, files, i, currentPage_1, collector;
@@ -186,7 +208,7 @@ function selectCategory(subject, message) {
                     switch (subject) {
                         case '📐':
                             embedArray = [];
-                            files = fs.readdirSync("./answers/" + subject + "/");
+                            files = fs.readdirSync("src/answers/Mathematics");
                             //Listens to output from write_questions.py
                             // write_questions.stdout.on('data', function (data) {
                             //     console.log("" + data);
@@ -205,7 +227,7 @@ function selectCategory(subject, message) {
                             collector.on("collect", function (b) {
                                 b.defer();
                                 if (b.id == "3") {
-                                    //pass
+                                    //select
                                 }
                                 else if (b.id == "2") {
                                     if (currentPage_1 !== 0) {
@@ -226,6 +248,9 @@ function selectCategory(subject, message) {
                                         currentPage_1 = 0;
                                         mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
                                     }
+                                }
+                                else if (b.id == "1") {
+                                    mybuttonsmsg["delete"]();
                                 }
                             });
                             break;
@@ -258,31 +283,7 @@ client.on('message', function (msg) {
     }
     else if (msg.content === '~PLAY') {
         createUser(msg); //Creates a user in the database, does nothing if player is already in database
-        /*     'Here is a list of categories you can choose (by reacting) to play through the freerice bot: \n\n' +
-            "Mathematics:",":triangular_ruler:"+  "\n\n" +
-            "Sciences:",":atom:" +  "\n\n" +
-            "Geography:",":earth_americas:"+  "\n\n" +
-            "English:",":abc:" */
-        var firstTitleLine = "__Here's our list of subjects you can choose from (by reacting)__";
-        var secondTitleLine = "__to find a more specific category to play__";
-        var amountOfSpaces = (firstTitleLine.replace('_', '').length - secondTitleLine.replace('_', '').length);
-        var playEmbed = new Discord.MessageEmbed()
-            .setColor('0x4286f4')
-            .setTitle(firstTitleLine + "\n" + (" ".repeat(amountOfSpaces) + secondTitleLine + " ".repeat(amountOfSpaces)))
-            .addFields(
-        // \u200B is to add a blank field. inline being true means these two fields are on the same line
-        { name: '\u200B' /* "__Subject__" */, value: "Mathematics:\n\nSciences:\n\nGeography:\n\nEnglish:", inline: true }, { name: '\u200B' /* "__Emoji__" */, value: ":triangular_ruler:\n\n:atom:\n\n:earth_americas:\n\n:abc:", inline: true });
-        msg.channel.send(playEmbed).then(function (sent) {
-            playID = sent.id;
-            playChannel = sent.channel;
-            // these reactions are obtained by searching up the ones above with a \ (forward slash)
-            // in front of them i.e. \:calendar_spiral:, need to use these since they're universal 
-            // and you can't react with the :(emoji): formatted emojis. 
-            sent.react('📐');
-            sent.react('⚛️');
-            sent.react('🌎');
-            sent.react('🔤');
-        });
+        sendPlay(msg);
     }
     else if (msg.content === '~HELP') {
         var helpEmbed = new Discord.MessageEmbed()

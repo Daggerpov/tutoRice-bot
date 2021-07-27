@@ -92,6 +92,35 @@ async function displayRankings(message) { //Not formatted properly yet
     message.channel.send(embed);
 };
 
+function sendPlay(msg){
+    let firstTitleLine: string = "__Here's our list of subjects you can choose from (by reacting)__";
+    let secondTitleLine: string = "__to find a more specific category to play__";
+    let amountOfSpaces: number = (firstTitleLine.replace('_', '').length - secondTitleLine.replace('_', '').length);
+
+    const playEmbed = new Discord.MessageEmbed()
+        .setColor('0x4286f4')
+        .setTitle(`${firstTitleLine}\n${" ".repeat(amountOfSpaces) + secondTitleLine + " ".repeat(amountOfSpaces)}`)
+        .addFields(
+            // \u200B is to add a blank field. inline being true means these two fields are on the same line
+            { name: '\u200B'/* "__Subject__" */, value: "Mathematics:\n\nSciences:\n\nGeography:\n\nEnglish:", inline: true },
+            { name: '\u200B'/* "__Emoji__" */, value: ":triangular_ruler:\n\n:atom:\n\n:earth_americas:\n\n:abc:", inline: true }
+        )
+
+    msg.channel.send(playEmbed).then(sent => {
+        playID = sent.id;
+        playChannel = sent.channel;
+
+        // these reactions are obtained by searching up the ones above with a \ (forward slash)
+        // in front of them i.e. \:calendar_spiral:, need to use these since they're universal 
+        // and you can't react with the :(emoji): formatted emojis. 
+
+        sent.react('📐');
+        sent.react('⚛️');
+        sent.react('🌎');
+        sent.react('🔤');
+    });
+}
+
 async function selectCategory(subject: string, message) {
     const write_questions = spawnSync('python', ['src/write_questions.py', subject], {stdio: 'inherit'})
     
@@ -123,7 +152,7 @@ async function selectCategory(subject: string, message) {
         case '📐':
             const embedArray = [];
 
-            let files = fs.readdirSync(`./answers/${subject}/`);
+            let files = fs.readdirSync(`src/answers/Mathematics`);
 
             
             //Listens to output from write_questions.py
@@ -149,7 +178,7 @@ async function selectCategory(subject: string, message) {
             collector.on("collect", (b) => {
                 b.defer();
                 if(b.id == "3"){
-                    //pass
+                    //select
                 }
                 else if(b.id == "2"){
                     if(currentPage !== 0){
@@ -168,6 +197,9 @@ async function selectCategory(subject: string, message) {
                         currentPage = 0;
                         mybuttonsmsg.edit({ embed: embedsarray[currentPage], buttons: buttonArray })
                     }
+                }
+                else if(b.id == "1"){
+                    mybuttonsmsg.delete();
                 }
             })
 
@@ -204,38 +236,7 @@ client.on('message', msg => {
     else if (msg.content === '~PLAY') {
 
         createUser(msg); //Creates a user in the database, does nothing if player is already in database
-        /*     'Here is a list of categories you can choose (by reacting) to play through the freerice bot: \n\n' +
-            "Mathematics:",":triangular_ruler:"+  "\n\n" +
-            "Sciences:",":atom:" +  "\n\n" +
-            "Geography:",":earth_americas:"+  "\n\n" +
-            "English:",":abc:" */
-
-        let firstTitleLine: string = "__Here's our list of subjects you can choose from (by reacting)__";
-        let secondTitleLine: string = "__to find a more specific category to play__";
-        let amountOfSpaces: number = (firstTitleLine.replace('_', '').length - secondTitleLine.replace('_', '').length);
-
-        const playEmbed = new Discord.MessageEmbed()
-            .setColor('0x4286f4')
-            .setTitle(`${firstTitleLine}\n${" ".repeat(amountOfSpaces) + secondTitleLine + " ".repeat(amountOfSpaces)}`)
-            .addFields(
-                // \u200B is to add a blank field. inline being true means these two fields are on the same line
-                { name: '\u200B'/* "__Subject__" */, value: "Mathematics:\n\nSciences:\n\nGeography:\n\nEnglish:", inline: true },
-                { name: '\u200B'/* "__Emoji__" */, value: ":triangular_ruler:\n\n:atom:\n\n:earth_americas:\n\n:abc:", inline: true }
-            )
-
-        msg.channel.send(playEmbed).then(sent => {
-            playID = sent.id;
-            playChannel = sent.channel;
-
-            // these reactions are obtained by searching up the ones above with a \ (forward slash)
-            // in front of them i.e. \:calendar_spiral:, need to use these since they're universal 
-            // and you can't react with the :(emoji): formatted emojis. 
-
-            sent.react('📐');
-            sent.react('⚛️');
-            sent.react('🌎');
-            sent.react('🔤');
-        });
+        sendPlay(msg);
     }
 
     else if (msg.content === '~HELP') {
