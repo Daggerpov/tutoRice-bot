@@ -50,6 +50,155 @@ var fs = require('fs');
 client.on('ready', function () {
     console.log("Logged in as " + client.user.tag + "!");
 });
+client.on('message', function (msg) {
+    msg.content = msg.content.toUpperCase();
+    if (msg.content === '~FREERICE') {
+        //var txt = "here";
+        msg.reply("This free discord bot allows discord users to earn rice grains from freerice.com within the app to help people in need from around the world. You can read up on what freerice is about here: https://freerice.com/about."); // + txt.link("https://freerice.com/about").get("href");
+    }
+    else if (msg.content === '~RANKINGS') {
+        displayRankings(msg);
+    }
+    else if (msg.content === '~PLAY') {
+        createUser(msg); //Creates a user in the database, does nothing if player is already in database
+        var firstTitleLine = "__Here's our list of subjects you can choose from (by reacting)__";
+        var secondTitleLine = "__to find a more specific category to play__";
+        var amountOfSpaces = (firstTitleLine.replace('_', '').length - secondTitleLine.replace('_', '').length);
+        var playEmbed = new Discord.MessageEmbed()
+            .setColor('0x4286f4')
+            .setTitle(firstTitleLine + "\n" + (" ".repeat(amountOfSpaces) + secondTitleLine + " ".repeat(amountOfSpaces)))
+            .addFields(
+        // \u200B is to add a blank field. inline being true means these two fields are on the same line
+        { name: '\u200B' /* "__Subject__" */, value: "Mathematics:\n\nSciences:\n\nGeography:\n\nEnglish:", inline: true }, { name: '\u200B' /* "__Emoji__" */, value: ":triangular_ruler:\n\n:atom:\n\n:earth_americas:\n\n:abc:", inline: true });
+        msg.channel.send(playEmbed).then(function (sent) {
+            playID = sent.id;
+            playChannel = sent.channel;
+            // these reactions are obtained by searching up the ones above with a \ (forward slash)
+            // in front of them i.e. \:calendar_spiral:, need to use these since they're universal 
+            // and you can't react with the :(emoji): formatted emojis. 
+            sent.react('📐');
+            sent.react('⚛️');
+            sent.react('🌎');
+            sent.react('🔤');
+        });
+    }
+    else if (msg.content === '~HELP') {
+        var helpEmbed = new Discord.MessageEmbed()
+            .setColor('0x4286f4')
+            .setTitle("__Below is a list of available commands__")
+            .addFields(
+        // \u200B is to add a blank field. inline being true means these two fields are on the same line
+        { name: '\u200B' /* "__Subject__" */, value: "~freerice\n\n~play\n\n~rankings", inline: true }, {
+            name: '\u200B' /* "__Emoji__" */, value: "|  description of the bot and its purpose\n\n" +
+                "|  play with the freerice bot by answering questions to earn rice\n\n|  see the current server-wide rankings for users' rice earned", inline: true
+        });
+        msg.channel.send(helpEmbed);
+    }
+});
+client.on('messageReactionAdd', function (reaction, user) {
+    var name = reaction.emoji.name;
+    var member = reaction.message.guild.members.cache.get(user.id);
+    if (reaction.message.id === playID && user.tag !== 'freerice#4898') {
+        reaction.message.reactions.removeAll()["catch"](function (error) { return console.error('Failed to clear reactions: ', error); });
+        selectCategory(name, reaction.message);
+        //let MathematicsCategory =  selectCategory('📐', reaction.message);
+        //question_category(MathematicsCategory); these don't work since i'm passing in promise not string
+    }
+});
+function selectCategory(subject, message) {
+    return __awaiter(this, void 0, void 0, function () {
+        var write_questions, exitButton, backButton, selectButton, nextButton, buttonArray, overviewEmbed, mybuttonsmsg, embedArray, files, i, currentPage, collector;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    write_questions = child_process_1.spawnSync('python', ['src/write_questions.py', subject], { stdio: 'inherit' });
+                    exitButton = new MessageButton()
+                        .setStyle("blurple")
+                        .setID("exit")
+                        .setLabel("↩️");
+                    backButton = new MessageButton()
+                        .setStyle("blurple")
+                        .setID("back")
+                        .setLabel("👈");
+                    selectButton = new MessageButton()
+                        .setStyle("blurple")
+                        .setID("select")
+                        .setLabel("☑️");
+                    nextButton = new MessageButton()
+                        .setStyle("blurple")
+                        .setID("next")
+                        .setLabel("👉");
+                    buttonArray = [exitButton, backButton, selectButton, nextButton];
+                    overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:");
+                    return [4 /*yield*/, message.channel.send({ embed: overviewEmbed, buttons: buttonArray })];
+                case 1:
+                    mybuttonsmsg = _a.sent();
+                    embedArray = [overviewEmbed];
+                    if (subject === '📐') {
+                        files = fs.readdirSync('src/answers/Mathematics');
+                    }
+                    else if (subject === '⚛️') {
+                        files = fs.readdirSync('src/answers/Sciences');
+                    }
+                    else if (subject === '🌎') {
+                        files = fs.readdirSync('src/answers/Geography');
+                    }
+                    else if (subject === '🔤') {
+                        files = fs.readdirSync('src/answers/English');
+                    }
+                    for (i = 0; i < files.length; i++) {
+                        embedArray.push(new Discord.MessageEmbed()
+                            .setColor('0x4286f4')
+                            .setDescription(files[i].replace('.txt', '')));
+                    }
+                    currentPage = 0;
+                    collector = mybuttonsmsg.createButtonCollector(function (button) { return button.clicker.user.id === message.author.id; }, { time: 60e3 });
+                    collector.on("collect", function (b) {
+                        b.defer();
+                        if (b.id == "3") {
+                            //select
+                        }
+                        else if (b.id == "2") {
+                            if (currentPage !== 0) {
+                                --currentPage;
+                                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray });
+                            }
+                            else {
+                                currentPage = embedArray.length - 1;
+                                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray });
+                            }
+                            console.log('back button pressed');
+                        }
+                        else if (b.id == "4") {
+                            if (currentPage < embedArray.length - 1) {
+                                currentPage++;
+                                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray });
+                            }
+                            else {
+                                currentPage = 0;
+                                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray });
+                            }
+                        }
+                        else if (b.id == "1") {
+                            mybuttonsmsg["delete"]();
+                        }
+                    });
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function question_category(category) {
+    //starts up python file and sends category arg
+    var questions = child_process_1.spawnSync('python', ['src/questions.py', category], { stdio: 'inherit' });
+    //Listens to output from questions.py
+    // questions.stdout.on('data', function (data) {
+    //     console.log("" + data);
+    // });
+    // questions.stderr.on('data', function (data) {
+    //     console.log("" + data);
+    // });
+}
 function createUser(msg) {
     return __awaiter(this, void 0, void 0, function () {
         var player, e_1, user, e_2;
@@ -154,187 +303,6 @@ function displayRankings(message) {
     });
 }
 ;
-function sendPlay(msg) {
-    var firstTitleLine = "__Here's our list of subjects you can choose from (by reacting)__";
-    var secondTitleLine = "__to find a more specific category to play__";
-    var amountOfSpaces = (firstTitleLine.replace('_', '').length - secondTitleLine.replace('_', '').length);
-    var playEmbed = new Discord.MessageEmbed()
-        .setColor('0x4286f4')
-        .setTitle(firstTitleLine + "\n" + (" ".repeat(amountOfSpaces) + secondTitleLine + " ".repeat(amountOfSpaces)))
-        .addFields(
-    // \u200B is to add a blank field. inline being true means these two fields are on the same line
-    { name: '\u200B' /* "__Subject__" */, value: "Mathematics:\n\nSciences:\n\nGeography:\n\nEnglish:", inline: true }, { name: '\u200B' /* "__Emoji__" */, value: ":triangular_ruler:\n\n:atom:\n\n:earth_americas:\n\n:abc:", inline: true });
-    msg.channel.send(playEmbed).then(function (sent) {
-        playID = sent.id;
-        playChannel = sent.channel;
-        // these reactions are obtained by searching up the ones above with a \ (forward slash)
-        // in front of them i.e. \:calendar_spiral:, need to use these since they're universal 
-        // and you can't react with the :(emoji): formatted emojis. 
-        sent.react('📐');
-        sent.react('⚛️');
-        sent.react('🌎');
-        sent.react('🔤');
-    });
-}
-function selectCategory(subject, message) {
-    return __awaiter(this, void 0, void 0, function () {
-        var write_questions, exitButton, backButton, selectButton, nextButton, buttonArray, overviewEmbed, mybuttonsmsg, embedsarray, embedArray, files, i, currentPage_1, collector;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    write_questions = child_process_1.spawnSync('python', ['src/write_questions.py', subject], { stdio: 'inherit' });
-                    exitButton = new MessageButton()
-                        .setStyle("blurple")
-                        .setID("exit")
-                        .setLabel("↩️");
-                    backButton = new MessageButton()
-                        .setStyle("blurple")
-                        .setID("back")
-                        .setLabel("👈");
-                    selectButton = new MessageButton()
-                        .setStyle("blurple")
-                        .setID("select")
-                        .setLabel("☑️");
-                    nextButton = new MessageButton()
-                        .setStyle("blurple")
-                        .setID("next")
-                        .setLabel("👉");
-                    buttonArray = [exitButton, backButton, selectButton, nextButton];
-                    overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:");
-                    return [4 /*yield*/, message.channel.send({ embed: overviewEmbed, buttons: buttonArray })];
-                case 1:
-                    mybuttonsmsg = _a.sent();
-                    embedsarray = [];
-                    switch (subject) {
-                        case '📐':
-                            embedArray = [];
-                            files = fs.readdirSync("src/answers/Mathematics");
-                            //Listens to output from write_questions.py
-                            // write_questions.stdout.on('data', function (data) {
-                            //     console.log("" + data);
-                            // });
-                            // write_questions.stderr.on('data', function (data) {
-                            //     console.log("" + data);
-                            // });
-                            for (i = 0; i < files.length; i++) {
-                                embedsarray.push(new Discord.MessageEmbed()
-                                    .setColor('0x4286f4')
-                                    .setTitle("" + files[0])
-                                    .setDescription(i));
-                            }
-                            currentPage_1 = 0;
-                            collector = mybuttonsmsg.createButtonCollector(function (button) { return button.clicker.user.id === message.author.id; }, { time: 60e3 });
-                            collector.on("collect", function (b) {
-                                b.defer();
-                                if (b.id == "3") {
-                                    //select
-                                }
-                                else if (b.id == "2") {
-                                    if (currentPage_1 !== 0) {
-                                        --currentPage_1;
-                                        mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
-                                    }
-                                    else {
-                                        currentPage_1 = embedsarray.length - 1;
-                                        mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
-                                    }
-                                }
-                                else if (b.id == "4") {
-                                    if (currentPage_1 < embedsarray.length - 1) {
-                                        currentPage_1++;
-                                        mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
-                                    }
-                                    else {
-                                        currentPage_1 = 0;
-                                        mybuttonsmsg.edit({ embed: embedsarray[currentPage_1], buttons: buttonArray });
-                                    }
-                                }
-                                else if (b.id == "1") {
-                                    mybuttonsmsg["delete"]();
-                                }
-                            });
-                            break;
-                        case '⚛️':
-                            // let PhysicsCategory = selectCategory('⚛️');
-                            // question_category(PhysicsCategory);
-                            break;
-                        case '🌎':
-                            // let GeographyCategory = selectCategory('🌎');
-                            // question_category(GeographyCategory);
-                            break;
-                        case '🔤':
-                            // let EnglishCategory = selectCategory('🔤');
-                            // question_category(EnglishCategory);
-                            break;
-                    }
-                    return [2 /*return*/, 'asdf'];
-            }
-        });
-    });
-}
-client.on('message', function (msg) {
-    msg.content = msg.content.toUpperCase();
-    if (msg.content === '~FREERICE') {
-        //var txt = "here";
-        msg.reply("This free discord bot allows discord users to earn rice grains from freerice.com within the app to help people in need from around the world. You can read up on what freerice is about here: https://freerice.com/about."); // + txt.link("https://freerice.com/about").get("href");
-    }
-    else if (msg.content === '~RANKINGS') {
-        displayRankings(msg);
-    }
-    else if (msg.content === '~PLAY') {
-        createUser(msg); //Creates a user in the database, does nothing if player is already in database
-        sendPlay(msg);
-    }
-    else if (msg.content === '~HELP') {
-        var helpEmbed = new Discord.MessageEmbed()
-            .setColor('0x4286f4')
-            .setTitle("__Below is a list of available commands__")
-            .addFields(
-        // \u200B is to add a blank field. inline being true means these two fields are on the same line
-        { name: '\u200B' /* "__Subject__" */, value: "~freerice\n\n~play\n\n~rankings", inline: true }, {
-            name: '\u200B' /* "__Emoji__" */, value: "|  description of the bot and its purpose\n\n" +
-                "|  play with the freerice bot by answering questions to earn rice\n\n|  see the current server-wide rankings for users' rice earned", inline: true
-        });
-        msg.channel.send(helpEmbed);
-    }
-});
-function question_category(category) {
-    //starts up python file and sends category arg
-    var questions = child_process_1.spawnSync('python', ['src/questions.py', category], { stdio: 'inherit' });
-    //Listens to output from questions.py
-    // questions.stdout.on('data', function (data) {
-    //     console.log("" + data);
-    // });
-    // questions.stderr.on('data', function (data) {
-    //     console.log("" + data);
-    // });
-}
-//Finds the reactions to ~play message and calls the scrape function from scrape.py
-client.on('messageReactionAdd', function (reaction, user) {
-    var name = reaction.emoji.name;
-    var member = reaction.message.guild.members.cache.get(user.id);
-    if (reaction.message.id === playID && user.tag !== 'freerice#4898') {
-        reaction.message.reactions.removeAll()["catch"](function (error) { return console.error('Failed to clear reactions: ', error); });
-        switch (name) {
-            case '📐':
-                var MathematicsCategory = selectCategory('📐', reaction.message);
-                //question_category(MathematicsCategory);
-                break;
-            case '⚛️':
-                var PhysicsCategory = selectCategory('⚛️', reaction.message);
-                //question_category(PhysicsCategory);
-                break;
-            case '🌎':
-                var GeographyCategory = selectCategory('🌎', reaction.message);
-                //question_category(GeographyCategory);
-                break;
-            case '🔤':
-                var EnglishCategory = selectCategory('🔤', reaction.message);
-                //question_category(EnglishCategory);
-                break;
-        }
-    }
-});
 var sequelize = new Sequelize('database', 'user', 'password', {
     host: 'localhost',
     dialect: 'sqlite',

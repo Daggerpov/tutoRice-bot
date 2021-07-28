@@ -1,5 +1,5 @@
 import sys
-subject = sys.argv[1]
+subject = sys.argv[1] #currently an emoji, which doesn't work within python with default encoding.
 
 from random import randint, shuffle
 
@@ -19,10 +19,7 @@ for i in range(1, 4-basic_addition_range):
 
 shuffle(basic_addition_answers)
 
-# print(f'What is {basic_addition_first} + {basic_addition_second}?: \
-#     {basic_addition_answers[0]}, {basic_addition_answers[1]}, \
-#         {basic_addition_answers[2]}, {basic_addition_answers[3]}')
-
 basic_addition_file = open('src/answers/Mathematics/basic_addition.txt', 'w')
-basic_addition_file.write('asdf')#
+basic_addition_file.write(f"What is {basic_addition_first} + {basic_addition_second}?: \
+{str(basic_addition_answers).replace('[', '').replace(']', '')}")
 basic_addition_file.close()
