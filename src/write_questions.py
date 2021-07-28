@@ -24,6 +24,5 @@ shuffle(basic_addition_answers)
 #         {basic_addition_answers[2]}, {basic_addition_answers[3]}')
 
 basic_addition_file = open('src/answers/Mathematics/basic_addition.txt', 'w')
-basic_addition_file.write(f"What is {basic_addition_first} + {basic_addition_second}?: \
-    {basic_addition_answers}")
+basic_addition_file.write('asdf')#
 basic_addition_file.close()
