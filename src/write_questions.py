@@ -19,7 +19,8 @@ for i in range(1, 4-basic_addition_range):
 
 shuffle(basic_addition_answers)
 
-basic_addition_file = open('src/answers/Mathematics/basic_addition.txt', 'w')
-basic_addition_file.write(f"What is {basic_addition_first} + {basic_addition_second}?: \
-{str(basic_addition_answers).replace('[', '').replace(']', '')}")
-basic_addition_file.close()
+with open('src/answers/Mathematics/basic_addition.txt', 'w') as f:
+
+    f.write(f"What is {basic_addition_first} + {basic_addition_second}?: \
+    {str(basic_addition_answers).replace('[', '').replace(']', '')}")
+f.close()
