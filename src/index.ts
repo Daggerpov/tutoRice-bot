@@ -17,7 +17,8 @@ client.on('ready', () => {
 
 
 
-client.on('message', msg => {
+client.on('message', async (msg) => {
+    global.msg = msg;
     msg.content = msg.content.toUpperCase()
     if (msg.content === '~FREERICE') {
         //var txt = "here";
@@ -43,6 +44,7 @@ client.on('message', msg => {
             )
 
         msg.channel.send(playEmbed).then(sent => {
+            global.sent = sent;
             playID = sent.id;
             playChannel = sent.channel;
 
@@ -73,100 +75,98 @@ client.on('message', msg => {
     }
 });
 
-client.on('messageReactionAdd', (reaction, user) => {
+client.on('messageReactionAdd', async (reaction, user) => {
     let { name } = reaction.emoji;
     let member = reaction.message.guild.members.cache.get(user.id);
     if (reaction.message.id === playID && user.tag !== 'freerice#4898') {
         reaction.message.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
-        
-        selectCategory(name, reaction.message);    
+
+        let subject = name;
+        const write_questions = spawnSync('python', ['src/write_questions.py', subject], { stdio: 'inherit' })
+
+        let exitButton = new MessageButton()
+            .setStyle("blurple")
+            .setID("exit")
+            .setLabel("↩️")
+        let backButton = new MessageButton()
+            .setStyle("blurple")
+            .setID("back")
+            .setLabel("👈")
+        let selectButton = new MessageButton()
+            .setStyle("blurple")
+            .setID("select")
+            .setLabel("☑️")
+        let nextButton = new MessageButton()
+            .setStyle("blurple")
+            .setID("next")
+            .setLabel("👉")
+        const buttonArray = [exitButton, backButton, selectButton, nextButton];
+
+        let overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:")
+
+        let mybuttonsmsg = await global.msg.channel.send({ embed: overviewEmbed, buttons: buttonArray })
+
+        /* const embedArray = [overviewEmbed]
+
+
+        let files: string;
+        if (subject === '📐') {
+            files = fs.readdirSync('src/answers/Mathematics');
+        } else if (subject === '⚛️') {
+            files = fs.readdirSync('src/answers/Sciences');
+        } else if (subject === '🌎') {
+            files = fs.readdirSync('src/answers/Geography');
+        } else if (subject === '🔤') {
+            files = fs.readdirSync('src/answers/English');
+        }
+
+        for (let i = 0; i < files.length; i++) {
+            embedArray.push(new Discord.MessageEmbed()
+                .setColor('0x4286f4')
+                .setDescription(files[i].replace('.txt', ''))
+            )
+        } 
+
+        let currentPage: number = 0;*/
+
+        const collector = mybuttonsmsg.createButtonCollector((button) => button.clicker.user.id === global.msg.author.id, { time: 60e3 });
+
+        collector.on("collect", (b) => {
+            console.log(b.id);
+            b.defer();
+            /* b.defer();
+            if (b.id == "1") {
+                console.log('exit button pressed');
+                mybuttonsmsg.delete();
+            } else if (b.id == "2") {
+                console.log('back button pressed');
+                if (currentPage !== 0) {
+                    --currentPage;
+                    mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
+                } else {
+                    currentPage = embedArray.length - 1;
+                    mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
+                }
+
+            } else if (b.id == "3") {
+                console.log('select button pressed');
+                //select
+            } else if (b.id == "4") {
+                console.log('next button pressed');
+                if (currentPage < embedArray.length - 1) {
+                    currentPage++;
+                    mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
+                } else {
+                    currentPage = 0;
+                    mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
+                }
+            } */
+        })
         //let MathematicsCategory =  selectCategory('📐', reaction.message);
         //question_category(MathematicsCategory); these don't work since i'm passing in promise not string
-                
+
     }
 });
-
-
-
-async function selectCategory(subject: string, message) {
-    const write_questions = spawnSync('python', ['src/write_questions.py', subject], { stdio: 'inherit' })
-
-    let exitButton = new MessageButton()
-        .setStyle("blurple")
-        .setID("exit")
-        .setLabel("↩️")
-    let backButton = new MessageButton()
-        .setStyle("blurple")
-        .setID("back")
-        .setLabel("👈")
-    let selectButton = new MessageButton()
-        .setStyle("blurple")
-        .setID("select")
-        .setLabel("☑️")
-    let nextButton = new MessageButton()
-        .setStyle("blurple")
-        .setID("next")
-        .setLabel("👉")
-    const buttonArray = [exitButton, backButton, selectButton, nextButton];
-
-    let overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:")
-
-    let mybuttonsmsg = await message.channel.send({ embed: overviewEmbed, buttons: buttonArray })
-
-    const embedArray = [overviewEmbed]
-
-
-    let files:string;
-    if (subject === '📐'){
-        files = fs.readdirSync('src/answers/Mathematics');
-    }else if (subject ===  '⚛️'){
-        files = fs.readdirSync('src/answers/Sciences');
-    }else if (subject === '🌎'){
-        files = fs.readdirSync('src/answers/Geography');
-    }else if (subject === '🔤'){
-        files = fs.readdirSync('src/answers/English');
-    }
-
-    for (let i = 0; i < files.length; i++) {
-        embedArray.push(new Discord.MessageEmbed()
-            .setColor('0x4286f4')
-            .setDescription(files[i].replace('.txt', ''))
-        )
-    }
-
-    let currentPage: number = 0;
-
-    const collector = mybuttonsmsg.createButtonCollector((button) => button.clicker.user.id === message.author.id, { time: 60e3 });
-
-    collector.on("collect", (b) => {
-        b.defer();
-        if (b.id == "3") {
-            //select
-        }
-        else if (b.id == "2") {
-            if (currentPage !== 0) {
-                --currentPage;
-                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-            } else {
-                currentPage = embedArray.length - 1;
-                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-            }
-            console.log('back button pressed');
-        }
-        else if (b.id == "4") {
-            if (currentPage < embedArray.length - 1) {
-                currentPage++;
-                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-            } else {
-                currentPage = 0;
-                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-            }
-        }
-        else if (b.id == "1") {
-            mybuttonsmsg.delete();
-        }
-    })
-}
 
 function question_category(category: string) {
     //starts up python file and sends category arg
