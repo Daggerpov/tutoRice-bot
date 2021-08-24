@@ -8,6 +8,7 @@ let playID, playChannel, scrapeOutput;
 const { MessageButton } = require("discord-buttons")
 require("discord-buttons")(client);
 const fs = require('fs');
+let globularmsg;
 
 //client.prefix = "~";
 
@@ -28,7 +29,7 @@ client.on('message', async (msg) => {
         displayRankings(msg);
     }
     else if (msg.content === '~PLAY') {
-
+        globularmsg = msg;
         createUser(msg); //Creates a user in the database, does nothing if player is already in database
         let firstTitleLine: string = "__Here's our list of subjects you can choose from (by reacting)__";
         let secondTitleLine: string = "__to find a more specific category to play__";
@@ -129,12 +130,11 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
         let currentPage: number = 0;*/
 
-        const collector = mybuttonsmsg.createButtonCollector((button) => button.clicker.user.id === global.msg.author.id, { time: 60e3 });
-
+        /*const collector = mybuttonsmsg.createButtonCollector((button) => button.clicker.user.id === global.msg.author.id, { time: 60e3 });
         collector.on("collect", (b) => {
             console.log(b.id);
             b.defer();
-            /* b.defer();
+             b.defer();
             if (b.id == "1") {
                 console.log('exit button pressed');
                 mybuttonsmsg.delete();
@@ -160,12 +160,21 @@ client.on('messageReactionAdd', async (reaction, user) => {
                     currentPage = 0;
                     mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
                 }
-            } */
-        })
+            } 
+        })*/
         //let MathematicsCategory =  selectCategory('📐', reaction.message);
         //question_category(MathematicsCategory); these don't work since i'm passing in promise not string
 
     }
+});
+
+client.on('clickButton',async (button) =>{
+    await button.clicker.fetch();
+    await button.reply.defer();
+    const user = button.clicker.user;
+    globularmsg.channel.send(button.id);
+
+    
 });
 
 function question_category(category: string) {

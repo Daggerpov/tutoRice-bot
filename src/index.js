@@ -46,6 +46,7 @@ var playID, playChannel, scrapeOutput;
 var MessageButton = require("discord-buttons").MessageButton;
 require("discord-buttons")(client);
 var fs = require('fs');
+var globularmsg;
 //client.prefix = "~";
 client.on('ready', function () {
     console.log("Logged in as " + client.user.tag + "!");
@@ -63,6 +64,7 @@ client.on('message', function (msg) { return __awaiter(void 0, void 0, void 0, f
             displayRankings(msg);
         }
         else if (msg.content === '~PLAY') {
+            globularmsg = msg;
             createUser(msg); //Creates a user in the database, does nothing if player is already in database
             firstTitleLine = "__Here's our list of subjects you can choose from (by reacting)__";
             secondTitleLine = "__to find a more specific category to play__";
@@ -102,7 +104,7 @@ client.on('message', function (msg) { return __awaiter(void 0, void 0, void 0, f
     });
 }); });
 client.on('messageReactionAdd', function (reaction, user) { return __awaiter(void 0, void 0, void 0, function () {
-    var name, member, subject, write_questions, exitButton, backButton, selectButton, nextButton, buttonArray, overviewEmbed, mybuttonsmsg, collector;
+    var name, member, subject, write_questions, exitButton, backButton, selectButton, nextButton, buttonArray, overviewEmbed, mybuttonsmsg;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -153,43 +155,61 @@ client.on('messageReactionAdd', function (reaction, user) { return __awaiter(voi
                     }
             
                     let currentPage: number = 0;*/
+                    /*const collector = mybuttonsmsg.createButtonCollector((button) => button.clicker.user.id === global.msg.author.id, { time: 60e3 });
+                    collector.on("collect", (b) => {
+                        console.log(b.id);
+                        b.defer();
+                         b.defer();
+                        if (b.id == "1") {
+                            console.log('exit button pressed');
+                            mybuttonsmsg.delete();
+                        } else if (b.id == "2") {
+                            console.log('back button pressed');
+                            if (currentPage !== 0) {
+                                --currentPage;
+                                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
+                            } else {
+                                currentPage = embedArray.length - 1;
+                                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
+                            }
+            
+                        } else if (b.id == "3") {
+                            console.log('select button pressed');
+                            //select
+                        } else if (b.id == "4") {
+                            console.log('next button pressed');
+                            if (currentPage < embedArray.length - 1) {
+                                currentPage++;
+                                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
+                            } else {
+                                currentPage = 0;
+                                mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
+                            }
+                        }
+                    })*/
+                    //let MathematicsCategory =  selectCategory('📐', reaction.message);
+                    //question_category(MathematicsCategory); these don't work since i'm passing in promise not string
                 ];
             case 1:
                 mybuttonsmsg = _a.sent();
-                collector = mybuttonsmsg.createButtonCollector(function (button) { return button.clicker.user.id === global.msg.author.id; }, { time: 60e3 });
-                collector.on("collect", function (b) {
-                    console.log(b.id);
-                    b.defer();
-                    /* b.defer();
-                    if (b.id == "1") {
-                        console.log('exit button pressed');
-                        mybuttonsmsg.delete();
-                    } else if (b.id == "2") {
-                        console.log('back button pressed');
-                        if (currentPage !== 0) {
-                            --currentPage;
-                            mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-                        } else {
-                            currentPage = embedArray.length - 1;
-                            mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-                        }
-        
-                    } else if (b.id == "3") {
-                        console.log('select button pressed');
-                        //select
-                    } else if (b.id == "4") {
-                        console.log('next button pressed');
-                        if (currentPage < embedArray.length - 1) {
-                            currentPage++;
-                            mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-                        } else {
-                            currentPage = 0;
-                            mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-                        }
-                    } */
-                });
                 _a.label = 2;
             case 2: return [2 /*return*/];
+        }
+    });
+}); });
+client.on('clickButton', function (button) { return __awaiter(void 0, void 0, void 0, function () {
+    var user;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, button.clicker.fetch()];
+            case 1:
+                _a.sent();
+                return [4 /*yield*/, button.reply.defer()];
+            case 2:
+                _a.sent();
+                user = button.clicker.user;
+                globularmsg.channel.send(button.id);
+                return [2 /*return*/];
         }
     });
 }); });
