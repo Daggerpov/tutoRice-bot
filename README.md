@@ -1,1 +1,1 @@
-# freerice Discord Bot (In Development)
+# tutoRice Bot (In Development - Pre Alpha)
