@@ -10,13 +10,9 @@ require("discord-buttons")(client);
 const fs = require('fs');
 let globularmsg;
 
-//client.prefix = "~";
-
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
-
-
 
 client.on('message', async (msg) => {
     global.msg = msg;
@@ -79,10 +75,23 @@ client.on('message', async (msg) => {
 client.on('messageReactionAdd', async (reaction, user) => {
     let { name } = reaction.emoji;
     let member = reaction.message.guild.members.cache.get(user.id);
-    if (reaction.message.id === playID && user.tag !== 'freerice#4898') {
+    if (reaction.message.id === playID && user.tag !== 'tutoRice#4898') {
         reaction.message.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
 
-        let subject = name;
+
+        
+        //let MathematicsCategory =  selectCategory('📐', reaction.message);
+        //question_category(MathematicsCategory); these don't work since i'm passing in promise not string
+
+    }
+});
+
+client.on('clickButton',async (button) =>{
+    await button.clicker.fetch();
+    await button.reply.defer();
+    const user = button.clicker.user;
+    globularmsg.channel.send(button.id);
+    let subject = name;
         const write_questions = spawnSync('python', ['src/write_questions.py', subject], { stdio: 'inherit' })
 
         let exitButton = new MessageButton()
@@ -107,7 +116,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
         let mybuttonsmsg = await global.msg.channel.send({ embed: overviewEmbed, buttons: buttonArray })
 
-        /* const embedArray = [overviewEmbed]
+        const embedArray = [overviewEmbed]
 
 
         let files: string;
@@ -128,17 +137,16 @@ client.on('messageReactionAdd', async (reaction, user) => {
             )
         } 
 
-        let currentPage: number = 0;*/
+        let currentPage: number = 0;
 
-        /*const collector = mybuttonsmsg.createButtonCollector((button) => button.clicker.user.id === global.msg.author.id, { time: 60e3 });
-        collector.on("collect", (b) => {
-            console.log(b.id);
-            b.defer();
-             b.defer();
-            if (b.id == "1") {
+        //const collector = mybuttonsmsg.createButtonCollector((button) => button.clicker.user.id === global.msg.author.id, { time: 60e3 });
+        //collector.on("collect", (b) => {
+        
+        switch(button){    
+            case "1":
                 console.log('exit button pressed');
                 mybuttonsmsg.delete();
-            } else if (b.id == "2") {
+            case "2":
                 console.log('back button pressed');
                 if (currentPage !== 0) {
                     --currentPage;
@@ -148,10 +156,10 @@ client.on('messageReactionAdd', async (reaction, user) => {
                     mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
                 }
 
-            } else if (b.id == "3") {
+            case "3":
                 console.log('select button pressed');
                 //select
-            } else if (b.id == "4") {
+            case "4":
                 console.log('next button pressed');
                 if (currentPage < embedArray.length - 1) {
                     currentPage++;
@@ -160,21 +168,8 @@ client.on('messageReactionAdd', async (reaction, user) => {
                     currentPage = 0;
                     mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
                 }
-            } 
-        })*/
-        //let MathematicsCategory =  selectCategory('📐', reaction.message);
-        //question_category(MathematicsCategory); these don't work since i'm passing in promise not string
-
-    }
-});
-
-client.on('clickButton',async (button) =>{
-    await button.clicker.fetch();
-    await button.reply.defer();
-    const user = button.clicker.user;
-    globularmsg.channel.send(button.id);
-
-    
+            
+        }
 });
 
 function question_category(category: string) {
