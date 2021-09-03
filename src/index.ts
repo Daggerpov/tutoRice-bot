@@ -1,5 +1,6 @@
 require('dotenv').config();
 import { spawnSync } from 'child_process';
+import { GlobalVars } from '../globals.js';
 import * as Discord from 'discord.js';
 const client = new Discord.Client();
 const Sequelize = require('sequelize');
@@ -8,7 +9,6 @@ let playID, playChannel, scrapeOutput;
 const { MessageButton } = require("discord-buttons")
 require("discord-buttons")(client);
 const fs = require('fs');
-let globularmsg;
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -25,7 +25,7 @@ client.on('message', async (msg) => {
         displayRankings(msg);
     }
     else if (msg.content === '~PLAY') {
-        globularmsg = msg;
+        GlobalVars.globularmsg = msg;
         createUser(msg); //Creates a user in the database, does nothing if player is already in database
         let firstTitleLine: string = "__Here's our list of subjects you can choose from (by reacting)__";
         let secondTitleLine: string = "__to find a more specific category to play__";
@@ -73,25 +73,12 @@ client.on('message', async (msg) => {
 });
 
 client.on('messageReactionAdd', async (reaction, user) => {
-    let { name } = reaction.emoji;
+    GlobalVars.reactionName = reaction.emoji;
     let member = reaction.message.guild.members.cache.get(user.id);
     if (reaction.message.id === playID && user.tag !== 'tutoRice#4898') {
         reaction.message.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
 
-
-        
-        //let MathematicsCategory =  selectCategory('📐', reaction.message);
-        //question_category(MathematicsCategory); these don't work since i'm passing in promise not string
-
-    }
-});
-
-client.on('clickButton',async (button) =>{
-    await button.clicker.fetch();
-    await button.reply.defer();
-    const user = button.clicker.user;
-    globularmsg.channel.send(button.id);
-    let subject = name;
+        let subject = GlobalVars.reactionName.name;
         const write_questions = spawnSync('python', ['src/write_questions.py', subject], { stdio: 'inherit' })
 
         let exitButton = new MessageButton()
@@ -110,13 +97,13 @@ client.on('clickButton',async (button) =>{
             .setStyle("blurple")
             .setID("next")
             .setLabel("👉")
-        const buttonArray = [exitButton, backButton, selectButton, nextButton];
+        GlobalVars.buttonArray = [exitButton, backButton, selectButton, nextButton];
 
         let overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:")
 
-        let mybuttonsmsg = await global.msg.channel.send({ embed: overviewEmbed, buttons: buttonArray })
+        GlobalVars.mybuttonsmsg = await global.msg.channel.send({ embed: overviewEmbed, buttons: GlobalVars.buttonArray })
 
-        const embedArray = [overviewEmbed]
+        GlobalVars.embedArray = [overviewEmbed]
 
 
         let files: string;
@@ -131,45 +118,58 @@ client.on('clickButton',async (button) =>{
         }
 
         for (let i = 0; i < files.length; i++) {
-            embedArray.push(new Discord.MessageEmbed()
+            GlobalVars.embedArray.push(new Discord.MessageEmbed()
                 .setColor('0x4286f4')
                 .setDescription(files[i].replace('.txt', ''))
             )
         } 
 
-        let currentPage: number = 0;
 
-        //const collector = mybuttonsmsg.createButtonCollector((button) => button.clicker.user.id === global.msg.author.id, { time: 60e3 });
-        //collector.on("collect", (b) => {
+
         
-        switch(button){    
-            case "1":
-                console.log('exit button pressed');
-                mybuttonsmsg.delete();
-            case "2":
-                console.log('back button pressed');
-                if (currentPage !== 0) {
-                    --currentPage;
-                    mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-                } else {
-                    currentPage = embedArray.length - 1;
-                    mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-                }
+        //let MathematicsCategory =  selectCategory('📐', reaction.message);
+        //question_category(MathematicsCategory); these don't work since i'm passing in promise not string
 
-            case "3":
-                console.log('select button pressed');
-                //select
-            case "4":
-                console.log('next button pressed');
-                if (currentPage < embedArray.length - 1) {
-                    currentPage++;
-                    mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-                } else {
-                    currentPage = 0;
-                    mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray })
-                }
-            
-        }
+    }
+});
+
+client.on('clickButton',async (button) =>{
+    await button.clicker.fetch();
+    await button.reply.defer(true);
+    const user = button.clicker.user;
+    GlobalVars.globularmsg.channel.send(button.id);
+        
+        //const collector = GlobalVars.mybuttonsmsg.createButtonCollector((button) => button.clicker.user.id === global.msg.author.id, { time: 60e3 });
+        //collector.on("collect", (b) => {
+    let currentPage: number = 0;
+    switch(button.id){    
+        case "exit":
+            console.log('exit button pressed');
+            GlobalVars.mybuttonsmsg.delete();
+        case "back":
+            console.log('back button pressed');
+            if (currentPage !== 0) {
+                --currentPage;
+                GlobalVars.mybuttonsmsg.edit({ embed: GlobalVars.embedArray[currentPage], buttons: GlobalVars.buttonArray })
+            } else {
+                currentPage =GlobalVars.embedArray.length - 1;
+                GlobalVars.mybuttonsmsg.edit({ embed: GlobalVars.embedArray[currentPage], buttons: GlobalVars.buttonArray })
+            }
+
+        case "select":
+            console.log('select button pressed');
+            //select
+        case "next":
+            console.log('next button pressed');
+            if (currentPage <GlobalVars.embedArray.length - 1) {
+                currentPage++;
+                GlobalVars.mybuttonsmsg.edit({ embed: GlobalVars.embedArray[currentPage], buttons: GlobalVars.buttonArray })
+            } else {
+                currentPage = 0;
+                GlobalVars.mybuttonsmsg.edit({ embed: GlobalVars.embedArray[currentPage], buttons: GlobalVars.buttonArray })
+            }
+        
+    }
 });
 
 function question_category(category: string) {

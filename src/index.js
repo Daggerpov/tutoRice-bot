@@ -38,6 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 require('dotenv').config();
 var child_process_1 = require("child_process");
+var globals_js_1 = require("../globals.js");
 var Discord = require("discord.js");
 var client = new Discord.Client();
 var Sequelize = require('sequelize');
@@ -46,7 +47,6 @@ var playID, playChannel, scrapeOutput;
 var MessageButton = require("discord-buttons").MessageButton;
 require("discord-buttons")(client);
 var fs = require('fs');
-var globularmsg;
 client.on('ready', function () {
     console.log("Logged in as " + client.user.tag + "!");
 });
@@ -63,7 +63,7 @@ client.on('message', function (msg) { return __awaiter(void 0, void 0, void 0, f
             displayRankings(msg);
         }
         else if (msg.content === '~PLAY') {
-            globularmsg = msg;
+            globals_js_1.GlobalVars.globularmsg = msg;
             createUser(msg); //Creates a user in the database, does nothing if player is already in database
             firstTitleLine = "__Here's our list of subjects you can choose from (by reacting)__";
             secondTitleLine = "__to find a more specific category to play__";
@@ -103,31 +103,15 @@ client.on('message', function (msg) { return __awaiter(void 0, void 0, void 0, f
     });
 }); });
 client.on('messageReactionAdd', function (reaction, user) { return __awaiter(void 0, void 0, void 0, function () {
-    var name, member;
-    return __generator(this, function (_a) {
-        name = reaction.emoji.name;
-        member = reaction.message.guild.members.cache.get(user.id);
-        if (reaction.message.id === playID && user.tag !== 'tutoRice#4898') {
-            reaction.message.reactions.removeAll()["catch"](function (error) { return console.error('Failed to clear reactions: ', error); });
-            //let MathematicsCategory =  selectCategory('📐', reaction.message);
-            //question_category(MathematicsCategory); these don't work since i'm passing in promise not string
-        }
-        return [2 /*return*/];
-    });
-}); });
-client.on('clickButton', function (button) { return __awaiter(void 0, void 0, void 0, function () {
-    var user, subject, write_questions, exitButton, backButton, selectButton, nextButton, buttonArray, overviewEmbed, mybuttonsmsg, embedArray, files, i, currentPage;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, button.clicker.fetch()];
-            case 1:
-                _a.sent();
-                return [4 /*yield*/, button.reply.defer()];
-            case 2:
-                _a.sent();
-                user = button.clicker.user;
-                globularmsg.channel.send(button.id);
-                subject = name;
+    var member, subject, write_questions, exitButton, backButton, selectButton, nextButton, overviewEmbed, _a, files, i;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                globals_js_1.GlobalVars.reactionName = reaction.emoji;
+                member = reaction.message.guild.members.cache.get(user.id);
+                if (!(reaction.message.id === playID && user.tag !== 'tutoRice#4898')) return [3 /*break*/, 2];
+                reaction.message.reactions.removeAll()["catch"](function (error) { return console.error('Failed to clear reactions: ', error); });
+                subject = globals_js_1.GlobalVars.reactionName.name;
                 write_questions = child_process_1.spawnSync('python', ['src/write_questions.py', subject], { stdio: 'inherit' });
                 exitButton = new MessageButton()
                     .setStyle("blurple")
@@ -145,12 +129,14 @@ client.on('clickButton', function (button) { return __awaiter(void 0, void 0, vo
                     .setStyle("blurple")
                     .setID("next")
                     .setLabel("👉");
-                buttonArray = [exitButton, backButton, selectButton, nextButton];
+                globals_js_1.GlobalVars.buttonArray = [exitButton, backButton, selectButton, nextButton];
                 overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:");
-                return [4 /*yield*/, global.msg.channel.send({ embed: overviewEmbed, buttons: buttonArray })];
-            case 3:
-                mybuttonsmsg = _a.sent();
-                embedArray = [overviewEmbed];
+                _a = globals_js_1.GlobalVars;
+                return [4 /*yield*/, global.msg.channel.send({ embed: overviewEmbed, buttons: globals_js_1.GlobalVars.buttonArray })];
+            case 1:
+                _a.mybuttonsmsg = _b.sent();
+                globals_js_1.GlobalVars.embedArray = [overviewEmbed];
+                files = void 0;
                 if (subject === '📐') {
                     files = fs.readdirSync('src/answers/Mathematics');
                 }
@@ -164,39 +150,54 @@ client.on('clickButton', function (button) { return __awaiter(void 0, void 0, vo
                     files = fs.readdirSync('src/answers/English');
                 }
                 for (i = 0; i < files.length; i++) {
-                    embedArray.push(new Discord.MessageEmbed()
+                    globals_js_1.GlobalVars.embedArray.push(new Discord.MessageEmbed()
                         .setColor('0x4286f4')
                         .setDescription(files[i].replace('.txt', '')));
                 }
+                _b.label = 2;
+            case 2: return [2 /*return*/];
+        }
+    });
+}); });
+client.on('clickButton', function (button) { return __awaiter(void 0, void 0, void 0, function () {
+    var user, currentPage;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, button.clicker.fetch()];
+            case 1:
+                _a.sent();
+                return [4 /*yield*/, button.reply.defer(true)];
+            case 2:
+                _a.sent();
+                user = button.clicker.user;
+                globals_js_1.GlobalVars.globularmsg.channel.send(button.id);
                 currentPage = 0;
-                //const collector = mybuttonsmsg.createButtonCollector((button) => button.clicker.user.id === global.msg.author.id, { time: 60e3 });
-                //collector.on("collect", (b) => {
-                switch (button) {
-                    case "1":
+                switch (button.id) {
+                    case "exit":
                         console.log('exit button pressed');
-                        mybuttonsmsg["delete"]();
-                    case "2":
+                        globals_js_1.GlobalVars.mybuttonsmsg["delete"]();
+                    case "back":
                         console.log('back button pressed');
                         if (currentPage !== 0) {
                             --currentPage;
-                            mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray });
+                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
                         else {
-                            currentPage = embedArray.length - 1;
-                            mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray });
+                            currentPage = globals_js_1.GlobalVars.embedArray.length - 1;
+                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
-                    case "3":
+                    case "select":
                         console.log('select button pressed');
                     //select
-                    case "4":
+                    case "next":
                         console.log('next button pressed');
-                        if (currentPage < embedArray.length - 1) {
+                        if (currentPage < globals_js_1.GlobalVars.embedArray.length - 1) {
                             currentPage++;
-                            mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray });
+                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
                         else {
                             currentPage = 0;
-                            mybuttonsmsg.edit({ embed: embedArray[currentPage], buttons: buttonArray });
+                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
                 }
                 return [2 /*return*/];
