@@ -64,6 +64,7 @@ client.on('message', function (msg) { return __awaiter(void 0, void 0, void 0, f
         }
         else if (msg.content === '~PLAY') {
             globals_js_1.GlobalVars.globularmsg = msg;
+            globals_js_1.GlobalVars.currentPage = 0;
             createUser(msg); //Creates a user in the database, does nothing if player is already in database
             firstTitleLine = "__Here's our list of subjects you can choose from (by reacting)__";
             secondTitleLine = "__to find a more specific category to play__";
@@ -103,7 +104,7 @@ client.on('message', function (msg) { return __awaiter(void 0, void 0, void 0, f
     });
 }); });
 client.on('messageReactionAdd', function (reaction, user) { return __awaiter(void 0, void 0, void 0, function () {
-    var member, subject, write_questions, exitButton, backButton, selectButton, nextButton, overviewEmbed, _a, files, i;
+    var member, subject, write_questions, exitButton, backButton, selectButton, nextButton, overviewEmbed, _a, files;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -149,18 +150,22 @@ client.on('messageReactionAdd', function (reaction, user) { return __awaiter(voi
                 else if (subject === '🔤') {
                     files = fs.readdirSync('src/answers/English');
                 }
-                for (i = 0; i < files.length; i++) {
+                files.forEach(function (subjectFileName) {
+                    var subjectName = subjectFileName.replace('.txt', '').split("_");
+                    for (var i = 0; i < subjectName.length; i++) {
+                        subjectName[i] = subjectName[i][0].toUpperCase() + subjectName[i].substr(1);
+                    }
                     globals_js_1.GlobalVars.embedArray.push(new Discord.MessageEmbed()
                         .setColor('0x4286f4')
-                        .setDescription(files[i].replace('.txt', '')));
-                }
+                        .setDescription(subjectName.join(" ")));
+                });
                 _b.label = 2;
             case 2: return [2 /*return*/];
         }
     });
 }); });
 client.on('clickButton', function (button) { return __awaiter(void 0, void 0, void 0, function () {
-    var user, currentPage;
+    var user;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, button.clicker.fetch()];
@@ -171,33 +176,32 @@ client.on('clickButton', function (button) { return __awaiter(void 0, void 0, vo
                 _a.sent();
                 user = button.clicker.user;
                 globals_js_1.GlobalVars.globularmsg.channel.send(button.id);
-                currentPage = 0;
                 switch (button.id) {
                     case "exit":
                         console.log('exit button pressed');
                         globals_js_1.GlobalVars.mybuttonsmsg["delete"]();
                     case "back":
                         console.log('back button pressed');
-                        if (currentPage !== 0) {
-                            --currentPage;
-                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
+                        if (globals_js_1.GlobalVars.currentPage !== 0) {
+                            --globals_js_1.GlobalVars.currentPage;
+                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[globals_js_1.GlobalVars.currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
                         else {
-                            currentPage = globals_js_1.GlobalVars.embedArray.length - 1;
-                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
+                            globals_js_1.GlobalVars.currentPage = globals_js_1.GlobalVars.embedArray.length - 1;
+                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[globals_js_1.GlobalVars.currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
                     case "select":
                         console.log('select button pressed');
                     //select
                     case "next":
-                        console.log('next button pressed');
-                        if (currentPage < globals_js_1.GlobalVars.embedArray.length - 1) {
-                            currentPage++;
-                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
+                        console.log('next button pressed', globals_js_1.GlobalVars.currentPage);
+                        if (globals_js_1.GlobalVars.currentPage < globals_js_1.GlobalVars.embedArray.length - 1) {
+                            globals_js_1.GlobalVars.currentPage += 1;
+                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[globals_js_1.GlobalVars.currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
                         else {
-                            currentPage = 0;
-                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
+                            globals_js_1.GlobalVars.currentPage = 0;
+                            globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[globals_js_1.GlobalVars.currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
                 }
                 return [2 /*return*/];
