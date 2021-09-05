@@ -62,7 +62,7 @@ client.on('message', function (msg) { return __awaiter(void 0, void 0, void 0, f
         else if (msg.content === '~RANKINGS') {
             displayRankings(msg);
         }
-        else if (msg.content === '~PLAY') {
+        else if (msg.content === '~PLAY' || msg.content === '~P') {
             globals_js_1.GlobalVars.globularmsg = msg;
             globals_js_1.GlobalVars.currentPage = 0;
             createUser(msg); //Creates a user in the database, does nothing if player is already in database
@@ -94,7 +94,7 @@ client.on('message', function (msg) { return __awaiter(void 0, void 0, void 0, f
                 .setTitle("__Below is a list of available commands__")
                 .addFields(
             // \u200B is to add a blank field. inline being true means these two fields are on the same line
-            { name: '\u200B' /* "__Subject__" */, value: "~freerice\n\n~play\n\n~rankings", inline: true }, {
+            { name: '\u200B' /* "__Subject__" */, value: "~freerice\n\n~play/~p\n\n~rankings", inline: true }, {
                 name: '\u200B' /* "__Emoji__" */, value: "|  description of the bot and its purpose\n\n" +
                     "|  play with the freerice bot by answering questions to earn rice\n\n|  see the current server-wide rankings for users' rice earned", inline: true
             });
