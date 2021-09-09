@@ -63,6 +63,9 @@ client.on('message', function (msg) { return __awaiter(void 0, void 0, void 0, f
             displayRankings(msg);
         }
         else if (msg.content === '~PLAY' || msg.content === '~P') {
+            // setting global variables for the message sent by the user and currentPage must be initialized
+            // here since it'd be called numerous times if it's under another event handler such as
+            // messageReactionAdd or clickButton 
             globals_js_1.GlobalVars.globularmsg = msg;
             globals_js_1.GlobalVars.currentPage = 0;
             createUser(msg); //Creates a user in the database, does nothing if player is already in database
@@ -133,9 +136,12 @@ client.on('messageReactionAdd', function (reaction, user) { return __awaiter(voi
                 globals_js_1.GlobalVars.buttonArray = [exitButton, backButton, selectButton, nextButton];
                 overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:");
                 _a = globals_js_1.GlobalVars;
-                return [4 /*yield*/, global.msg.channel.send({ embed: overviewEmbed, buttons: globals_js_1.GlobalVars.buttonArray })];
+                return [4 /*yield*/, global.msg.channel.send({ embed: overviewEmbed, buttons: globals_js_1.GlobalVars.buttonArray })
+                    // ? maybe this could be shortened with just setting it initially in the overviewEmbed initialization
+                ];
             case 1:
                 _a.mybuttonsmsg = _b.sent();
+                // ? maybe this could be shortened with just setting it initially in the overviewEmbed initialization
                 globals_js_1.GlobalVars.embedArray = [overviewEmbed];
                 files = void 0;
                 if (subject === '📐') {
@@ -151,6 +157,8 @@ client.on('messageReactionAdd', function (reaction, user) { return __awaiter(voi
                     files = fs.readdirSync('src/answers/English');
                 }
                 files.forEach(function (subjectFileName) {
+                    // going through each file name and settings these as the description of the subjects
+                    // after being formatted by capitlizing them correctly and such
                     var subjectName = subjectFileName.replace('.txt', '').split("_");
                     for (var i = 0; i < subjectName.length; i++) {
                         subjectName[i] = subjectName[i][0].toUpperCase() + subjectName[i].substr(1);
@@ -165,16 +173,19 @@ client.on('messageReactionAdd', function (reaction, user) { return __awaiter(voi
     });
 }); });
 client.on('clickButton', function (button) { return __awaiter(void 0, void 0, void 0, function () {
-    var user;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, button.clicker.fetch()];
+            case 0: 
+            // fetching the clicking state by way of its clicker
+            return [4 /*yield*/, button.clicker.fetch()];
             case 1:
+                // fetching the clicking state by way of its clicker
                 _a.sent();
+                // defer tells the script to not wait for the button's reply
                 return [4 /*yield*/, button.reply.defer(true)];
             case 2:
+                // defer tells the script to not wait for the button's reply
                 _a.sent();
-                user = button.clicker.user;
                 globals_js_1.GlobalVars.globularmsg.channel.send(button.id);
                 switch (button.id) {
                     case "exit":
@@ -187,12 +198,13 @@ client.on('clickButton', function (button) { return __awaiter(void 0, void 0, vo
                             globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[globals_js_1.GlobalVars.currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
                         else {
+                            // will go backwards if first page all the way to last
                             globals_js_1.GlobalVars.currentPage = globals_js_1.GlobalVars.embedArray.length - 1;
                             globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[globals_js_1.GlobalVars.currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
                     case "select":
                         console.log('select button pressed');
-                    //select
+                    // TODO call question_category() and pass in subject selected
                     case "next":
                         console.log('next button pressed', globals_js_1.GlobalVars.currentPage);
                         if (globals_js_1.GlobalVars.currentPage < globals_js_1.GlobalVars.embedArray.length - 1) {
@@ -200,6 +212,7 @@ client.on('clickButton', function (button) { return __awaiter(void 0, void 0, vo
                             globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[globals_js_1.GlobalVars.currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
                         else {
+                            // will go forwards if last page back to first
                             globals_js_1.GlobalVars.currentPage = 0;
                             globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[globals_js_1.GlobalVars.currentPage], buttons: globals_js_1.GlobalVars.buttonArray });
                         }
@@ -209,15 +222,9 @@ client.on('clickButton', function (button) { return __awaiter(void 0, void 0, vo
     });
 }); });
 function question_category(category) {
-    //starts up python file and sends category arg
+    // starts up python file and sends category arg, with stdio as well to avoid needing supplementary 
+    // commands to accept input and erorrs
     var questions = child_process_1.spawnSync('python', ['src/questions.py', category], { stdio: 'inherit' });
-    //Listens to output from questions.py
-    // questions.stdout.on('data', function (data) {
-    //     console.log("" + data);
-    // });
-    // questions.stderr.on('data', function (data) {
-    //     console.log("" + data);
-    // });
 }
 function createUser(msg) {
     return __awaiter(this, void 0, void 0, function () {
@@ -227,6 +234,7 @@ function createUser(msg) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
                     return [4 /*yield*/, Player.create({
+                            //Creates a player that holds its username and rice count as fields
                             username: msg.author.tag,
                             rice: 0
                         })];
@@ -246,6 +254,7 @@ function createUser(msg) {
                 case 3:
                     _a.trys.push([3, 5, , 6]);
                     return [4 /*yield*/, Servers.create({
+                            //Creates a user that holds its username and the server it was created in as fields
                             username: msg.author.tag,
                             serverName: msg.guild.id
                         })];
@@ -266,13 +275,14 @@ function createUser(msg) {
         });
     });
 }
-//Need this function because I need to be able to use await keyword
+//function is needed for async capabilities
 function displayRankings(message) {
     return __awaiter(this, void 0, void 0, function () {
         var players, playerList, riceAmounts, i, user, arr, maxFields, i, extra, embed;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, Servers.findAll({
+                        //Finds all players that are a part of the server that this function was called in
                         where: {
                             serverName: message.guild.id
                         },
@@ -303,6 +313,7 @@ function displayRankings(message) {
                 case 5:
                     arr = [];
                     maxFields = (playerList.length < 11) ? playerList.length : 11;
+                    // the following is for formatting spacing and symbols
                     for (i = 0; i < maxFields; i++) {
                         extra = 2.5;
                         if (i == 0) {
@@ -323,25 +334,28 @@ function displayRankings(message) {
     });
 }
 ;
+// initializing sqlite database 
 var sequelize = new Sequelize('database', 'user', 'password', {
     host: 'localhost',
     dialect: 'sqlite',
     logging: false,
-    // SQLite only
     storage: 'database.sqlite'
 });
 var Player = sequelize.define('Player', {
     username: {
+        //Tag of the user is the unique key
         type: Sequelize.STRING,
         unique: true
     },
     rice: {
+        //Number of rice for the user, defaults to 0
         type: Sequelize.INTEGER,
         defaultValue: 0
     }
 });
 var Servers = sequelize.define('Servers', {
     username: {
+        //Tag of the user is a foreign key from the player database, composite unique key with serverName
         type: Sequelize.STRING,
         references: {
             model: 'players',
@@ -350,12 +364,15 @@ var Servers = sequelize.define('Servers', {
         unique: 'compositeIndex'
     },
     serverName: {
+        //The server that the user was created in, composite unique key with username
         type: Sequelize.STRING,
         unique: 'compositeIndex'
     }
 });
-Player.hasMany(Servers); //Creates a one-to-many table relationship between Player and Servers
+//Creates a one-to-many table relationship between Player and Servers
+Player.hasMany(Servers);
 //Creates the databases
 Player.sync();
 Servers.sync();
+// logging client in by passing in hidden bot token
 client.login(process.env.BOT_TOKEN);

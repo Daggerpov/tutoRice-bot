@@ -27,6 +27,10 @@ client.on('message', async (msg) => {
         displayRankings(msg);
     }
     else if (msg.content === '~PLAY' || msg.content === '~P') {
+        // setting global variables for the message sent by the user and currentPage must be initialized
+        // here since it'd be called numerous times if it's under another event handler such as
+        // messageReactionAdd or clickButton 
+
         GlobalVars.globularmsg = msg;
         GlobalVars.currentPage = 0;
         createUser(msg); //Creates a user in the database, does nothing if player is already in database
@@ -102,12 +106,13 @@ client.on('messageReactionAdd', async (reaction, user) => {
             .setLabel("👉")
         GlobalVars.buttonArray = [exitButton, backButton, selectButton, nextButton];
 
+        // select category embed with list of categories and buttons to select them
         let overviewEmbed = new Discord.MessageEmbed().setColor('0x4286f4').setDescription("Select a Category:")
-
         GlobalVars.mybuttonsmsg = await global.msg.channel.send({ embed: overviewEmbed, buttons: GlobalVars.buttonArray })
-
+        // ? maybe this could be shortened with just setting it initially in the overviewEmbed initialization
         GlobalVars.embedArray = [overviewEmbed]
 
+        // get all files from selected category directory
         let files;
         if (subject === '📐') {
             files = fs.readdirSync('src/answers/Mathematics');
@@ -121,6 +126,8 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
 
         files.forEach(subjectFileName => {
+            // going through each file name and settings these as the description of the subjects
+            // after being formatted by capitlizing them correctly and such
             let subjectName = subjectFileName.replace('.txt', '').split("_");
             for (let i = 0; i < subjectName.length; i++) {
                 subjectName[i] = subjectName[i][0].toUpperCase() + subjectName[i].substr(1);
@@ -130,17 +137,16 @@ client.on('messageReactionAdd', async (reaction, user) => {
                 .setDescription(subjectName.join(" "))
             )
         });
-        //let MathematicsCategory =  selectCategory('📐', reaction.message);
-        //question_category(MathematicsCategory); these don't work since i'm passing in promise not string
-
     }
 });
 
 client.on('clickButton', async (button) => {
+    // fetching the clicking state by way of its clicker
     await button.clicker.fetch();
+    // defer tells the script to not wait for the button's reply
     await button.reply.defer(true);
-    const user = button.clicker.user;
     GlobalVars.globularmsg.channel.send(button.id);
+
     switch (button.id) {
         case "exit":
             console.log('exit button pressed');
@@ -151,18 +157,20 @@ client.on('clickButton', async (button) => {
                 --GlobalVars.currentPage;
                 GlobalVars.mybuttonsmsg.edit({ embed: GlobalVars.embedArray[GlobalVars.currentPage], buttons: GlobalVars.buttonArray })
             } else {
+                // will go backwards if first page all the way to last
                 GlobalVars.currentPage = GlobalVars.embedArray.length - 1;
                 GlobalVars.mybuttonsmsg.edit({ embed: GlobalVars.embedArray[GlobalVars.currentPage], buttons: GlobalVars.buttonArray })
             }
         case "select":
             console.log('select button pressed');
-        //select
+            // TODO call question_category() and pass in subject selected
         case "next":
             console.log('next button pressed', GlobalVars.currentPage);
             if (GlobalVars.currentPage < GlobalVars.embedArray.length - 1) {
                 GlobalVars.currentPage += 1;
                 GlobalVars.mybuttonsmsg.edit({ embed: GlobalVars.embedArray[GlobalVars.currentPage], buttons: GlobalVars.buttonArray })
             } else {
+                // will go forwards if last page back to first
                 GlobalVars.currentPage = 0;
                 GlobalVars.mybuttonsmsg.edit({ embed: GlobalVars.embedArray[GlobalVars.currentPage], buttons: GlobalVars.buttonArray })
             }
@@ -170,23 +178,16 @@ client.on('clickButton', async (button) => {
 });
 
 function question_category(category: string) {
-    //starts up python file and sends category arg
+    // starts up python file and sends category arg, with stdio as well to avoid needing supplementary 
+    // commands to accept input and erorrs
     const questions = spawnSync('python', ['src/questions.py', category], { stdio: 'inherit' });
-
-    //Listens to output from questions.py
-    // questions.stdout.on('data', function (data) {
-    //     console.log("" + data);
-    // });
-    // questions.stderr.on('data', function (data) {
-    //     console.log("" + data);
-    // });
 }
 
-
-
-async function createUser(msg) { //Creates an entry in both the Players database and the Servers database
+async function createUser(msg) { 
+    //Creates an entry in both the Players database and the Servers database
     try {
-        const player = await Player.create({ //Creates a player that holds its username and rice count as fields
+        const player = await Player.create({ 
+            //Creates a player that holds its username and rice count as fields
             username: msg.author.tag,
             rice: 0,
         })
@@ -199,7 +200,8 @@ async function createUser(msg) { //Creates an entry in both the Players database
         }
     }
     try {
-        const user = await Servers.create({ //Creates a user that holds its username and the server it was created in as fields
+        const user = await Servers.create({ 
+            //Creates a user that holds its username and the server it was created in as fields
             username: msg.author.tag,
             serverName: msg.guild.id,
         })
@@ -213,18 +215,21 @@ async function createUser(msg) { //Creates an entry in both the Players database
 
 }
 
-//Need this function because I need to be able to use await keyword
-async function displayRankings(message) { //Not formatted properly yet
-    const players = await Servers.findAll({ //Finds all players that are a part of the server that this function was called in
+//function is needed for async capabilities
+async function displayRankings(message) { 
+    const players = await Servers.findAll({ 
+        //Finds all players that are a part of the server that this function was called in
         where: {
             serverName: message.guild.id
         },
         attributes: ['username']
     });
 
-    const playerList = players.map(t => t.username); //Creates an array of player usernames
+    const playerList = players.map(t => t.username); 
+    //Creates an array of player usernames
     let riceAmounts = []
-    for (let i = 0; i < playerList.length; i++) { //Finds the rice count of those players in the list
+    for (let i = 0; i < playerList.length; i++) { 
+        //Finds the rice count of those players in the list
         const user = await Player.findOne({
             where: {
                 username: playerList[i]
@@ -237,6 +242,8 @@ async function displayRankings(message) { //Not formatted properly yet
 
     let arr: Array<Discord.EmbedFieldData> = [];
     let maxFields = (playerList.length < 11) ? playerList.length : 11;
+
+    // the following is for formatting spacing and symbols
     for (let i = 0; i < maxFields; i++) {
         let extra: number = 2.5;
         if (i == 0) {
@@ -257,27 +264,30 @@ async function displayRankings(message) { //Not formatted properly yet
     message.channel.send(embed);
 };
 
+// initializing sqlite database 
 const sequelize = new Sequelize('database', 'user', 'password', {
     host: 'localhost',
     dialect: 'sqlite',
     logging: false,
-    // SQLite only
     storage: 'database.sqlite',
 });
 
 const Player = sequelize.define('Player', {
-    username: { //Tag of the user is the unique key
+    username: { 
+        //Tag of the user is the unique key
         type: Sequelize.STRING,
         unique: true,
     },
-    rice: { //Number of rice for the user, defaults to 0
+    rice: { 
+        //Number of rice for the user, defaults to 0
         type: Sequelize.INTEGER,
         defaultValue: 0,
     },
 });
 
 const Servers = sequelize.define('Servers', {
-    username: { //Tag of the user is a foreign key from the player database, composite unique key with serverName
+    username: { 
+        //Tag of the user is a foreign key from the player database, composite unique key with serverName
         type: Sequelize.STRING,
         references: {
             model: 'players',
@@ -285,16 +295,19 @@ const Servers = sequelize.define('Servers', {
         },
         unique: 'compositeIndex',
     },
-    serverName: { //The server that the user was created in, composite unique key with username
+    serverName: { 
+        //The server that the user was created in, composite unique key with username
         type: Sequelize.STRING,
         unique: 'compositeIndex',
     },
 });
 
-Player.hasMany(Servers); //Creates a one-to-many table relationship between Player and Servers
+//Creates a one-to-many table relationship between Player and Servers
+Player.hasMany(Servers); 
 
 //Creates the databases
 Player.sync();
 Servers.sync();
 
+// logging client in by passing in hidden bot token
 client.login(process.env.BOT_TOKEN);
