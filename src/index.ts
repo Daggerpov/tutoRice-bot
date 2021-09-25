@@ -1,6 +1,6 @@
 require('dotenv').config();
 import { spawnSync } from 'child_process';
-import { GlobalVars } from '../globals.js';
+import { GlobalVars } from './globals.js';
 import * as Discord from 'discord.js';
 import { WSAECONNREFUSED } from 'constants';
 import { type } from 'os';
@@ -152,7 +152,7 @@ client.on('clickButton', async (button) => {
             console.log('exit button pressed');
             GlobalVars.mybuttonsmsg.delete();
         case "back":
-            console.log('back button pressed');
+            console.log('back button pressed', GlobalVars.currentPage);
             if (GlobalVars.currentPage !== 0) {
                 --GlobalVars.currentPage;
                 GlobalVars.mybuttonsmsg.edit({ embed: GlobalVars.embedArray[GlobalVars.currentPage], buttons: GlobalVars.buttonArray })

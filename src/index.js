@@ -38,7 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 require('dotenv').config();
 var child_process_1 = require("child_process");
-var globals_js_1 = require("../globals.js");
+var globals_js_1 = require("./globals.js");
 var Discord = require("discord.js");
 var client = new Discord.Client();
 var Sequelize = require('sequelize');
@@ -192,7 +192,7 @@ client.on('clickButton', function (button) { return __awaiter(void 0, void 0, vo
                         console.log('exit button pressed');
                         globals_js_1.GlobalVars.mybuttonsmsg["delete"]();
                     case "back":
-                        console.log('back button pressed');
+                        console.log('back button pressed', globals_js_1.GlobalVars.currentPage);
                         if (globals_js_1.GlobalVars.currentPage !== 0) {
                             --globals_js_1.GlobalVars.currentPage;
                             globals_js_1.GlobalVars.mybuttonsmsg.edit({ embed: globals_js_1.GlobalVars.embedArray[globals_js_1.GlobalVars.currentPage], buttons: globals_js_1.GlobalVars.buttonArray });

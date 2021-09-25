@@ -3,12 +3,12 @@
 # venv\Scripts\activate
 # pip install virtualenvwrapper
 npm init -y
-npm install discord.js
-npm install dotenv
-npm install express
-npm install nodemon
-npm install typescript
-npm install sequelize
-npm install sqlite3
-npm install stream
-npm install discord-buttons
+npm i discord.js
+npm i dotenv
+npm i express
+npm i nodemon
+npm i typescript
+npm i sequelize
+npm i sqlite3
+npm i stream
+npm i discord-buttons
